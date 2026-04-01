@@ -1,0 +1,48 @@
+# =============================================================
+# .github/workflows/scrape.yml — GitHub Actions: Auto Scraper
+# รัน scraper อัตโนมัติทุก 12 ชั่วโมง
+# สามารถ trigger ด้วยตนเองได้จากหน้า Actions
+# =============================================================
+
+name: Villa Availability Scraper
+
+on:
+  # รันอัตโนมัติทุก 12 ชั่วโมง (00:00 และ 12:00 UTC)
+  schedule:
+    - cron: '0 */12 * * *'
+
+  # รันด้วยตนเองได้จากหน้า GitHub Actions
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30  # Scraper อาจใช้เวลา 10-15 นาที
+
+    steps:
+      # 1. Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Setup Python
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: scraper/requirements.txt
+
+      # 3. Install Python dependencies
+      - name: Install dependencies
+        run: pip install -r scraper/requirements.txt
+
+      # 4. Install Playwright browser
+      - name: Install Playwright Chromium
+        run: playwright install chromium --with-deps
+
+      # 5. Run scraper
+      - name: Run scraper
+        run: python scraper/main.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}

@@ -1,0 +1,192 @@
+// =============================================================
+// app/admin/properties/page.tsx — Property List (Admin)
+// ตารางแสดง properties ทั้งหมด + actions (Edit, Delete, Toggle)
+// =============================================================
+
+"use client";
+
+import Link from "next/link";
+import { useProperties } from "@/hooks/useProperties";
+import { formatPrice } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+
+export default function AdminPropertiesPage() {
+  const { properties, isLoading, mutate } = useProperties();
+  const supabase = createClient();
+
+  const getZoneLabel = (zone: string | null) => {
+    if (zone === "bangsaen") return "บางแสน";
+    if (zone === "pattaya") return "พัทยา";
+    if (zone === "sattahip") return "สัตหีบ";
+    if (zone === "rayong") return "ระยอง";
+    return "-";
+  };
+
+  // --- Toggle Active ---
+  const handleToggleActive = async (id: string, currentActive: boolean) => {
+    await fetch(`/api/properties/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_active: !currentActive }),
+    });
+    mutate();
+  };
+
+  // --- Delete ---
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`ต้องการลบ "${name}" หรือไม่?`)) return;
+    await fetch(`/api/properties/${id}`, { method: "DELETE" });
+    mutate();
+  };
+
+  return (
+    <div className="p-8">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-text-primary">
+            จัดการบ้านพัก
+          </h1>
+          <p className="text-text-secondary text-sm mt-1">
+            {properties.length} รายการ
+          </p>
+        </div>
+        <a
+          href="/admin/properties/new"
+          className="px-4 py-2 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent/90 transition-colors"
+        >
+          + เพิ่มบ้านใหม่
+        </a>
+      </div>
+
+      {/* Table */}
+      {isLoading ? (
+        <LoadingSpinner size="lg" />
+      ) : (
+        <div className="bg-surface rounded-xl border border-white/5 overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-white/5">
+                <th className="text-left p-4 text-text-secondary text-sm font-medium">
+                  ชื่อ
+                </th>
+                <th className="text-left p-4 text-text-secondary text-sm font-medium">
+                  โซน
+                </th>
+                <th className="text-left p-4 text-text-secondary text-sm font-medium">
+                  ห้องนอน
+                </th>
+                <th className="text-left p-4 text-text-secondary text-sm font-medium">
+                  ราคาฐาน
+                </th>
+                <th className="text-left p-4 text-text-secondary text-sm font-medium">
+                  วันว่าง
+                </th>
+                <th className="text-left p-4 text-text-secondary text-sm font-medium">
+                  สถานะ
+                </th>
+                <th className="text-right p-4 text-text-secondary text-sm font-medium">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {properties.map((property) => (
+                <tr
+                  key={property.id}
+                  className="border-b border-white/5 hover:bg-card/50 transition-colors"
+                >
+                  {/* ชื่อ */}
+                  <td className="p-4">
+                    <div>
+                      <p className="text-text-primary font-medium text-sm">
+                        {property.name}
+                      </p>
+                      {property.source_url && (
+                        <p className="text-text-secondary text-xs truncate max-w-[200px]">
+                          {property.source_url}
+                        </p>
+                      )}
+                    </div>
+                  </td>
+
+                  {/* โซน */}
+                  <td className="p-4">
+                    <span className="px-2 py-1 rounded-full text-xs bg-card text-text-secondary">
+                      {getZoneLabel(property.zone)}
+                    </span>
+                  </td>
+
+                  {/* ห้องนอน */}
+                  <td className="p-4 text-text-primary text-sm">
+                    {property.bedrooms}
+                  </td>
+
+                  {/* ราคาฐาน */}
+                  <td className="p-4 text-text-primary text-sm">
+                    {formatPrice(property.base_price)}
+                  </td>
+
+                  {/* วันว่าง */}
+                  <td className="p-4">
+                    <span
+                      className={`text-sm font-medium ${
+                        property.available_days > 0
+                          ? "text-available"
+                          : "text-booked"
+                      }`}
+                    >
+                      {property.available_days} วัน
+                    </span>
+                  </td>
+
+                  {/* สถานะ Active */}
+                  <td className="p-4">
+                    <button
+                      onClick={() =>
+                        handleToggleActive(property.id, property.is_active)
+                      }
+                      className={`px-2 py-1 rounded-full text-xs ${
+                        property.is_active
+                          ? "bg-green-500/20 text-green-400"
+                          : "bg-red-500/20 text-red-400"
+                      }`}
+                    >
+                      {property.is_active ? "Active" : "Inactive"}
+                    </button>
+                  </td>
+
+                  {/* Actions */}
+                  <td className="p-4 text-right space-x-2">
+                    <Link
+                      href={`/admin/properties/${property.id}`}
+                      className="text-accent hover:text-accent/80 text-sm"
+                    >
+                      แก้ไข
+                    </Link>
+                    <button
+                      onClick={() => handleDelete(property.id, property.name)}
+                      className="text-red-400 hover:text-red-300 text-sm"
+                    >
+                      ลบ
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {properties.length === 0 && (
+            <p className="text-text-secondary text-sm text-center py-12">
+              ยังไม่มีบ้านพัก —{" "}
+              <a href="/admin/properties/new" className="text-accent">
+                เพิ่มบ้านใหม่
+              </a>
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

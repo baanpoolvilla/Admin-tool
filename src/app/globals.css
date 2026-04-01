@@ -1,0 +1,65 @@
+/* =============================================================
+   app/globals.css — Global Styles
+   - Tailwind directives
+   - Google Fonts import (Inter + Noto Sans Thai)
+   - Custom global styles
+   ============================================================= */
+
+/* --- Google Fonts --- */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* --- Base Styles --- */
+@layer base {
+  body {
+    @apply bg-background text-text-primary font-sans;
+  }
+
+  /* Scrollbar styling (dark theme) */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-surface;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-text-secondary/30 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-text-secondary/50;
+  }
+}
+
+/* --- Leaflet overrides (dark theme) --- */
+.leaflet-container {
+  background: #1a1d26 !important;
+}
+.leaflet-popup-content-wrapper {
+  @apply bg-surface text-text-primary rounded-lg shadow-xl border border-white/10;
+}
+.leaflet-popup-tip {
+  @apply bg-surface;
+}
+
+/* Custom pin marker (ลบ default icon style) */
+.custom-pin-marker {
+  background: transparent !important;
+  border: none !important;
+}
+.custom-pin-marker .leaflet-marker-icon {
+  background: transparent !important;
+  border: none !important;
+}
+.leaflet-marker-icon.custom-pin-marker {
+  background: transparent !important;
+  border: none !important;
+}
+/* Mobile: ซ่อน attribution บน mobile */
+@media (max-width: 767px) {
+  .leaflet-control-attribution {
+    font-size: 8px;
+  }
+}

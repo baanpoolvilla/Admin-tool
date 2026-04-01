@@ -1,0 +1,207 @@
+# =============================================================
+# scraper/scrapers/poolvillacity.py — Pool Villa City Scraper
+# Scrape ข้อมูล availability จาก poolvillacity.co.th
+#
+# โครงสร้างเว็บ:
+#   - ใช้ FullCalendar library
+#   - แต่ละวัน: <td data-date="YYYY-MM-DD" class="fc-daygrid-day">
+#   - สถานะจอง = background event (fc-bg-event) ภายใน td
+#     - rgb(248, 229, 231) ชมพู = มีจองแล้ว (booked)
+#     - rgb(255, 253, 234) เหลือง = วันหยุด (available)
+#     - ไม่มี event = ว่าง (available)
+#   - ราคาเริ่มต้นอยู่บนหน้า: "เริ่มต้น X,XXX ฿"
+#   - Navigate เดือนด้วยปุ่ม next ของ FullCalendar
+# =============================================================
+
+import asyncio
+import re
+from datetime import datetime, timedelta
+from playwright.async_api import async_playwright
+from .base import BaseScraper, ScrapedDate
+from config import HEADLESS, PAGE_TIMEOUT, SCRAPE_DAYS_AHEAD
+
+
+class PoolVillaCityScraper(BaseScraper):
+    """Scraper สำหรับ poolvillacity.co.th"""
+
+    @property
+    def source_name(self) -> str:
+        return "poolvillacity"
+
+    async def scrape(self, source_url: str, property_code: str) -> list[ScrapedDate]:
+        results: dict[str, ScrapedDate] = {}  # ใช้ dict deduplicate ทันที
+        base_price = None
+
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=HEADLESS)
+            context = await browser.new_context(
+                viewport={"width": 1280, "height": 720},
+                locale="th-TH",
+            )
+            page = await context.new_page()
+            page.set_default_timeout(PAGE_TIMEOUT)
+
+            try:
+                print(f"  [poolvillacity] เปิดหน้า: {source_url}")
+                await page.goto(source_url, wait_until="networkidle")
+                await asyncio.sleep(3)
+
+                # --- ดึงราคาเริ่มต้นจากหน้า ---
+                base_price = await self._extract_base_price(page)
+                if base_price:
+                    print(f"  [poolvillacity] ราคาเริ่มต้น: ฿{base_price:,.0f}")
+
+                # --- ดึง calendar data จากเดือนปัจจุบัน ---
+                today = datetime.now().date()
+                end_date = today + timedelta(days=SCRAPE_DAYS_AHEAD)
+
+                # FullCalendar อาจแสดงหลายเดือนในหน้าเดียว
+                # parse ทั้งหมดที่เห็น แล้ว navigate ไปเดือนถัดไปจนครบ
+                months_needed = self._count_months(today, end_date)
+
+                for i in range(months_needed):
+                    month_data = await self._parse_fullcalendar(
+                        page, today, end_date, base_price
+                    )
+
+                    for sd in month_data:
+                        # Deduplicate: เก็บผลล่าสุดต่อวัน
+                        results[sd.date] = sd
+
+                    # คลิก Next เพื่อไปเดือนถัดไป
+                    if i < months_needed - 1:
+                        clicked = await self._click_next_month(page)
+                        if not clicked:
+                            print(f"  [poolvillacity] ไม่สามารถกด Next ได้ หยุดที่เดือน {i+1}")
+                            break
+                        await asyncio.sleep(2)
+
+            except Exception as e:
+                print(f"  [poolvillacity] Error: {e}")
+                raise
+            finally:
+                await browser.close()
+
+        result_list = list(results.values())
+        print(f"  [poolvillacity] scrape เสร็จ: {len(result_list)} วัน")
+        return result_list
+
+    async def _extract_base_price(self, page) -> float | None:
+        """ดึงราคาเริ่มต้นจากหน้าเว็บ เช่น 'เริ่มต้น 1,990 ฿'"""
+        try:
+            price_text = await page.evaluate("""() => {
+                const els = document.querySelectorAll('span, div');
+                for (const el of els) {
+                    const t = el.textContent || '';
+                    if (t.includes('฿') && t.length < 50) {
+                        const match = t.match(/([\\d,]+)\\s*฿/);
+                        if (match) return match[1];
+                    }
+                }
+                return null;
+            }""")
+
+            if price_text:
+                return float(price_text.replace(",", ""))
+        except Exception:
+            pass
+        return None
+
+    async def _parse_fullcalendar(self, page, start_date, end_date, base_price):
+        """Parse FullCalendar td elements และ background events"""
+        results = []
+
+        data = await page.evaluate("""(args) => {
+            const [startStr, endStr] = args;
+            const start = new Date(startStr);
+            const end = new Date(endStr);
+            const rows = [];
+
+            const tds = document.querySelectorAll('td.fc-daygrid-day[data-date]');
+            for (const td of tds) {
+                const date = td.getAttribute('data-date');
+                if (!date) continue;
+
+                const d = new Date(date);
+                if (d < start || d > end) continue;
+
+                // ตรวจ background events
+                const bgEvents = td.querySelectorAll('.fc-bg-event');
+                let eventColor = null;
+                if (bgEvents.length > 0) {
+                    const style = window.getComputedStyle(bgEvents[0]);
+                    eventColor = style.backgroundColor;
+                }
+
+                rows.push({ date, eventColor });
+            }
+            return rows;
+        }""", [start_date.isoformat(), end_date.isoformat()])
+
+        for row in data:
+            status = self._color_to_status(row["eventColor"])
+
+            results.append(ScrapedDate(
+                date=row["date"],
+                status=status,
+                price=base_price if status == "available" else None,
+            ))
+
+        return results
+
+    def _color_to_status(self, event_color: str | None) -> str:
+        """
+        แปลงสี background event เป็นสถานะ
+
+        - rgb(248, 229, 231) ชมพู → booked
+        - rgb(255, 253, 234) เหลือง → available (วันหยุด)
+        - None (ไม่มี event) → available
+        """
+        if not event_color:
+            return "available"
+
+        match = re.search(
+            r"rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)", event_color
+        )
+        if not match:
+            return "available"
+
+        r, g, b = int(match.group(1)), int(match.group(2)), int(match.group(3))
+
+        # ชมพู/แดง = booked (rgb ~248, 229, 231)
+        if r > 230 and g < 240 and b < 240 and r > g:
+            return "booked"
+
+        # เหลืออ่อน = วันหยุด (rgb ~255, 253, 234) → ยังว่างอยู่
+        if r > 240 and g > 240 and b < 240:
+            return "available"
+
+        return "available"
+
+    async def _click_next_month(self, page) -> bool:
+        """คลิกปุ่ม Next ของ FullCalendar เพื่อไปเดือนถัดไป"""
+        try:
+            # FullCalendar next button
+            next_btn = await page.query_selector(
+                ".fc-next-button, button.fc-next-button, "
+                "[aria-label='next'], [title='Next']"
+            )
+            if next_btn:
+                await next_btn.click()
+                return True
+
+            # ลอง XPath
+            next_btn = await page.query_selector("button:has-text('next')")
+            if next_btn:
+                await next_btn.click()
+                return True
+
+        except Exception as e:
+            print(f"  [poolvillacity] Next button error: {e}")
+
+        return False
+
+    def _count_months(self, start, end) -> int:
+        """นับจำนวนเดือนที่ต้อง scrape"""
+        months = (end.year - start.year) * 12 + (end.month - start.month) + 1
+        return max(1, months)

@@ -1,0 +1,115 @@
+
+===SCRIPT===
+
+===SCRIPT===
+
+===SCRIPT===
+
+===SCRIPT===
+
+===SCRIPT===
+
+$(function() {
+
+    var h = "183";
+    var d = "2026-04";
+
+    $.ajax({
+        url: "getBookings.php",
+        type: "GET",
+        dataType: "json",
+        data: { hid: h, day: d },
+
+        success: function(data) {
+
+            var tz = "Asia/Bangkok";
+
+            /* -------- Holiday / Hot Promotion -------- */
+            data.hld.forEach(function(v) {
+
+                var st = moment.tz(v.chkin, tz);
+                var en = moment.tz(v.chkout, tz);
+
+                while (st.isBefore(en, "day")) {
+                    var id = st.format("YYYY-MM-DD");
+
+                    if (v.st === "holiday") {
+                        $("#" + id).css("background-color", "yellow");
+                    } else {
+                        $("#" + id).css({
+                            "background-image": "url(https://www.บ้านพักพูลวิลล่าพัทยา.com/Agent-Checking/imgs/pro.gif)",
+                            "background-size": "65%",
+                            "background-position": "center",
+                            "background-repeat": "no-repeat"
+                        });
+                    }
+                    st.add(1, "day");
+                }
+            });
+
+            /* -------- Fire Promotion -------- */
+            data.fire.forEach(function(v) {
+
+                var st = moment.tz(v.chkin, tz);
+                var en = moment.tz(v.chkout, tz);
+
+                while (st.isBefore(en, "day")) {
+                    var id = st.format("YYYY-MM-DD");
+
+                    $("#" + id).css({
+                        "background-image": "url(https://www.บ้านพักพูลวิลล่าพัทยา.com/Agent-Checking/imgs/pro.gif)",
+                        "background-size": "65%",
+                        "background-position": "center",
+                        "background-repeat": "no-repeat"
+                    });
+
+                    st.add(1, "day");
+                }
+            });
+
+            /* -------- Booking Status -------- */
+            data.dt.forEach(function(v) {
+                var st = moment.tz(v.chkin, tz);
+                var en = moment.tz(v.chkout, tz);
+
+                while (st.isBefore(en, "day")) {
+                    var id = st.format("YYYY-MM-DD");
+
+                    var col = "red";
+                    if (v.st === "waiting") col = "green";
+                    if (v.st === "repair") col = "orange";
+
+                    $("#" + id)
+                        .css("background-color", col)
+                        .addClass(v.st)
+                        .attr("data-bk-day", id);
+
+                    st.add(1, "day");
+                }
+            });
+        }
+    });
+
+    $(".btn-refresh").click(function() {
+        location.reload();
+    });
+
+    $(document).on("click", ".booking", function() {
+        Swal.fire("ติดจองแล้ว");
+    });
+    $(document).on("click", ".waiting", function() {
+        Swal.fire("รอโอน");
+    });
+    $(document).on("click", ".repair", function() {
+        Swal.fire("ปิดปรับปรุง");
+    });
+
+    $(document).on("click", ".bk", function() {
+        var day = $(this).data("day");
+        var hid = $(this).data("hid");
+
+        $.get("nsp.php", { bk_day: day, bk_hid: hid }, function(res) {
+            Swal.fire({ html: res });
+        });
+    });
+});

@@ -1,0 +1,10 @@
+# =============================================================
+# scraper/requirements.txt — Python Dependencies
+# สำหรับ web scraper ที่ใช้ Playwright + Supabase
+# =============================================================
+
+playwright==1.49.1
+python-dotenv==1.0.1
+supabase==2.11.0
+httpx==0.28.1
+python-dateutil==2.9.0
