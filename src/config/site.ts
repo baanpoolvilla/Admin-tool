@@ -14,6 +14,7 @@ export const siteConfig = {
     { label: "Dashboard", href: "/admin/dashboard", icon: "LayoutDashboard" },
     { label: "Properties", href: "/admin/properties", icon: "Building" },
     { label: "Calendar", href: "/admin/calendar", icon: "Calendar" },
+    { label: "Scraper", href: "/admin/scraper", icon: "Link" },
   ],
 
   // --- เมนู Public ---
