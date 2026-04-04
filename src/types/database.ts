@@ -8,12 +8,36 @@ export type Database = {
   public: {
     Tables: {
 
+      // --- ตาราง profiles: ข้อมูล role ของ user ---
+      profiles: {
+        Row: {
+          id: string;
+          email: string | null;
+          role: "admin" | "partner";
+          display_name: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          email?: string | null;
+          role?: "admin" | "partner";
+          display_name?: string | null;
+        };
+        Update: {
+          email?: string | null;
+          role?: "admin" | "partner";
+          display_name?: string | null;
+        };
+        Relationships: [];
+      };
+
       // --- ตาราง properties: ข้อมูลบ้านพักทั้งหมด ---
       properties: {
         Row: {
           id: string;
           name: string;
           slug: string;
+          property_code: string | null;
           source: "deville" | "poolvillacity" | "manual";
           zone: "bangsaen" | "pattaya" | "sattahip" | "rayong" | null;
           source_url: string | null;
@@ -23,12 +47,17 @@ export type Database = {
           latitude: number | null;
           longitude: number | null;
           max_guests: number;
+          extra_guests: number;
           bedrooms: number;
           bathrooms: number;
           base_price: number | null;
+          pets_allowed: boolean;
           thumbnail_url: string | null;
           images: string[] | null;
           is_active: boolean;
+          partner_id: string | null;
+          price_markup: number | null;  // ราคาบวกเพิ่มสำหรับหน้าแชร์
+          detail_url: string | null;    // ลิงก์รายละเอียดภายนอก
           created_at: string;
           updated_at: string;
         };
@@ -36,6 +65,7 @@ export type Database = {
           id?: string;
           name: string;
           slug: string;
+          property_code?: string | null;
           source: "deville" | "poolvillacity" | "manual";
           zone?: "bangsaen" | "pattaya" | "sattahip" | "rayong" | null;
           source_url?: string | null;
@@ -45,17 +75,23 @@ export type Database = {
           latitude?: number | null;
           longitude?: number | null;
           max_guests?: number;
+          extra_guests?: number;
           bedrooms?: number;
           bathrooms?: number;
           base_price?: number | null;
+          pets_allowed?: boolean;
           thumbnail_url?: string | null;
           images?: string[] | null;
           is_active?: boolean;
+          partner_id?: string | null;
+          price_markup?: number | null;
+          detail_url?: string | null;
         };
         Update: {
           id?: string;
           name?: string;
           slug?: string;
+          property_code?: string | null;
           source?: "deville" | "poolvillacity" | "manual";
           zone?: "bangsaen" | "pattaya" | "sattahip" | "rayong" | null;
           source_url?: string | null;
@@ -65,12 +101,17 @@ export type Database = {
           latitude?: number | null;
           longitude?: number | null;
           max_guests?: number;
+          extra_guests?: number;
           bedrooms?: number;
           bathrooms?: number;
           base_price?: number | null;
+          pets_allowed?: boolean;
           thumbnail_url?: string | null;
           images?: string[] | null;
           is_active?: boolean;
+          partner_id?: string | null;
+          price_markup?: number | null;
+          detail_url?: string | null;
           updated_at?: string;
         };
         Relationships: [];

@@ -7,8 +7,8 @@ import { cn } from "@/lib/utils";
 import type { AvailabilityStatus } from "@/types";
 
 const statusStyles: Record<AvailabilityStatus, string> = {
-  available: "bg-green-500/20 text-green-400 border-green-500/50",
-  booked: "bg-red-500/20 text-red-400 border-red-500/50",
+  available: "bg-green-50 text-green-600 border-green-500/50",
+  booked: "bg-red-50 text-red-600 border-red-500/50",
   blocked: "bg-gray-500/20 text-gray-400 border-gray-500/50",
 };
 

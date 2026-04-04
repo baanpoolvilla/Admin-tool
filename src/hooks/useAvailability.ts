@@ -11,9 +11,14 @@ import type { Availability } from "@/types";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-export function useAvailability(propertyId: string | null) {
+type UseAvailabilityOptions = {
+  daysAhead?: number;
+};
+
+export function useAvailability(propertyId: string | null, options?: UseAvailabilityOptions) {
+  const daysAhead = options?.daysAhead ?? 60;
   const from = today();
-  const to = daysFromNow(60);
+  const to = daysFromNow(daysAhead);
 
   const { data, error, isLoading, mutate } = useSWR<Availability[]>(
     propertyId

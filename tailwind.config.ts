@@ -18,20 +18,20 @@ const config: Config = {
       // === สี (Colors) — ตาม Design System ===
       colors: {
         // พื้นหลังหลัก
-        background: "#0F1117",
+        background: "#FAFAF8",
         // พื้นผิว (surface) สำหรับ panels
-        surface: "#1A1D26",
+        surface: "#F3F1EC",
         // พื้น card
-        card: "#22263A",
-        // สีเน้น
-        accent: "#4F9EFF",
+        card: "#FFFFFF",
+        // สีเน้น (ส้มอุ่น)
+        accent: "#E8622A",
         // สีสถานะ
-        available: "#2ED573",
-        booked: "#FF4757",
-        blocked: "#8892A4",
+        available: "#22C55E",
+        booked: "#EF4444",
+        blocked: "#9CA3AF",
         // ข้อความ
-        "text-primary": "#FFFFFF",
-        "text-secondary": "#8892A4",
+        "text-primary": "#1F2937",
+        "text-secondary": "#6B7280",
       },
 
       // === ฟอนต์ (Fonts) ===

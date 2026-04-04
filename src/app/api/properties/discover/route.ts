@@ -14,8 +14,23 @@ type PropertyInsert = Database["public"]["Tables"]["properties"]["Insert"];
 interface DiscoveredProperty {
   code: string;
   name: string;
+  slug?: string;
+  property_code?: string;
   imageUrl: string | null;
   source: "deville" | "poolvillacity";
+  // Optional fields from edit step
+  description?: string;
+  address?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  max_guests?: number;
+  extra_guests?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  base_price?: number | null;
+  pets_allowed?: boolean;
+  thumbnail_url?: string;
+  is_active?: boolean;
 }
 
 type SourceType = "deville" | "poolvillacity" | "unknown";
@@ -141,16 +156,24 @@ export async function POST(request: NextRequest) {
 
   const inserts: PropertyInsert[] = properties.map((p) => ({
     name: p.name,
-    slug: slugify(p.name),
+    slug: p.slug || slugify(p.name),
+    property_code: p.property_code || null,
     source: source,
     source_url: sourceUrl,
     source_property_id: p.code,
     zone: zone as Zone,
-    thumbnail_url: p.imageUrl,
-    is_active: true,
-    max_guests: 10,
-    bedrooms: 1,
-    bathrooms: 1,
+    thumbnail_url: p.thumbnail_url || p.imageUrl,
+    is_active: p.is_active ?? true,
+    description: p.description || null,
+    address: p.address || null,
+    latitude: p.latitude ?? null,
+    longitude: p.longitude ?? null,
+    max_guests: p.max_guests || 10,
+    extra_guests: p.extra_guests || 0,
+    bedrooms: p.bedrooms || 1,
+    bathrooms: p.bathrooms || 1,
+    base_price: p.base_price ?? null,
+    pets_allowed: p.pets_allowed ?? false,
   }));
 
   const { data, error } = await supabase
@@ -180,9 +203,13 @@ async function discoverDeville(url: string): Promise<DiscoveredProperty[]> {
     throw new Error("ไม่พบรหัส owner (s=XXXX) ใน URL");
   }
 
+  // ใช้ path จาก URL ต้นทาง (/acld/ หรือ /acldl/)
+  const pathBase = parsed.pathname.replace(/\/$/, ""); // e.g. "/acld" or "/acldl"
+  const apiBase = `https://www.devillegroups.com${pathBase}`;
+
   // เรียก getCalendars.php API ตรง
   const resp = await fetch(
-    "https://www.devillegroups.com/acldl/getCalendars.php",
+    `${apiBase}/getCalendars.php`,
     {
       method: "POST",
       headers: {

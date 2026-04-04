@@ -13,7 +13,7 @@ type PriceCardProps = {
 
 export default function PriceCard({ label, price, subtitle }: PriceCardProps) {
   return (
-    <div className="bg-card rounded-lg border border-white/5 p-4">
+    <div className="bg-card rounded-lg border border-gray-200 p-4">
       <p className="text-text-secondary text-sm">{label}</p>
       <p className="text-2xl font-bold text-text-primary mt-1">
         {formatPrice(price)}

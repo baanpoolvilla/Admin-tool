@@ -14,8 +14,10 @@ export type PropertyUpdate = Database["public"]["Tables"]["properties"]["Update"
 export type PropertyWithStats = Property & {
   available_days: number; // จำนวนวันว่างใน 60 วันข้างหน้า
   total_days: number; // จำนวนวันทั้งหมดที่มีข้อมูล
-  avg_price: number | null; // ราคาเฉลี่ยต่อคืน
+  avg_price: number | null; // ราคาเฉลี่ยต่อคืน (รวม markup)
+  min_price: number | null; // ราคาต่ำสุดต่อคืน (รวม markup)
   is_available_today: boolean; // วันนี้ว่างหรือไม่
+  // price_markup และ detail_url ถูก inherit มาจาก Property (database row) แล้ว
 };
 
 // --- แหล่งที่มาของ Property ---

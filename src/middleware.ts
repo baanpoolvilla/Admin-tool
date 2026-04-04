@@ -5,6 +5,7 @@
 // =============================================================
 
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
@@ -36,19 +37,58 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // ถ้าเข้า /admin/* (ยกเว้น /admin/login) โดยไม่ได้ login → redirect
   const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
-  const isLoginPage = request.nextUrl.pathname === "/admin/login";
+  const isPartnerRoute = request.nextUrl.pathname.startsWith("/partner");
+  const isAdminLoginPage = request.nextUrl.pathname === "/admin/login";
+  const isHomeLoginPage = request.nextUrl.pathname === "/login";
+  const isAnyLoginPage = isAdminLoginPage || isHomeLoginPage;
+  const isDashboardRoot = request.nextUrl.pathname === "/";
 
-  if (isAdminRoute && !isLoginPage && !user) {
-    const loginUrl = new URL("/admin/login", request.url);
-    return NextResponse.redirect(loginUrl);
+  // ป้องกัน dashboard หลัก (/) — ต้อง login
+  if (isDashboardRoot && !user) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // ถ้า login แล้วเข้า /admin/login → redirect ไป dashboard
-  if (isLoginPage && user) {
-    const dashboardUrl = new URL("/admin/dashboard", request.url);
-    return NextResponse.redirect(dashboardUrl);
+  if (isAdminRoute && !isAnyLoginPage && !user) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  // ป้องกัน partner routes — ต้อง login
+  if (isPartnerRoute && !user) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  // ตรวจสอบ role เพื่อป้องกัน partner เข้า /admin/* และ admin เข้า /partner/*
+  if (user && (isAdminRoute || isPartnerRoute || isAnyLoginPage)) {
+    const adminClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_KEY!
+    );
+    const { data: profile } = await adminClient
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    const role = profile?.role ?? "admin";
+
+    // ถ้า login แล้วเข้า page login ใดๆ → redirect ตาม role
+    if (isAnyLoginPage) {
+      if (role === "admin") {
+        return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+      }
+      return NextResponse.redirect(new URL("/partner/dashboard", request.url));
+    }
+
+    // partner พยายามเข้า /admin/* → redirect ไป /partner/dashboard
+    if (isAdminRoute && !isAnyLoginPage && role !== "admin") {
+      return NextResponse.redirect(new URL("/partner/dashboard", request.url));
+    }
+
+    // admin พยายามเข้า /partner/* → redirect ไป /admin/dashboard
+    if (isPartnerRoute && role === "admin") {
+      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+    }
   }
 
   return supabaseResponse;
@@ -56,5 +96,5 @@ export async function middleware(request: NextRequest) {
 
 // กำหนดว่า middleware ทำงานกับ routes ไหนบ้าง
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/", "/login", "/admin/:path*", "/partner/:path*"],
 };

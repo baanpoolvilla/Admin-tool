@@ -34,6 +34,7 @@ export default function CalendarView({
 
   // --- คำนวณสถิติ ---
   const stats = useMemo(() => {
+    const markup = typeof property?.price_markup === "number" ? property.price_markup : 0;
     const available = availability.filter((a) => a.status === "available");
     const prices = available
       .map((a) => a.price)
@@ -47,14 +48,15 @@ export default function CalendarView({
       bookedDays: availability.filter((a) => a.status === "booked").length,
       avgPrice:
         prices.length > 0
-          ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length)
+          ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length) + markup
           : null,
       lastScrapedAt: lastScraped?.scraped_at || null,
     };
-  }, [availability]);
+  }, [availability, property]);
 
   // --- สร้างข้อมูลปฏิทิน 2 เดือน ---
   const months = useMemo(() => {
+    const markup = typeof property?.price_markup === "number" ? property.price_markup : 0;
     const result = [];
     const now = new Date();
 
@@ -77,13 +79,14 @@ export default function CalendarView({
         const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
         const isPast = new Date(dateStr) < new Date(new Date().toDateString());
         const entry = dateMap.get(dateStr);
+        const displayPrice = entry?.price != null ? entry.price + markup : null;
 
         days.push({
           day: d,
           date: dateStr,
           isPast,
           status: entry?.status || null,
-          price: entry?.price || null,
+          price: displayPrice,
           source: entry?.source || null,
         });
       }
@@ -97,7 +100,7 @@ export default function CalendarView({
     }
 
     return result;
-  }, [dateMap]);
+  }, [dateMap, property]);
 
   // --- ไม่มี property ที่เลือก ---
   if (!property) {
@@ -114,7 +117,7 @@ export default function CalendarView({
   return (
     <div className="flex flex-col h-full overflow-y-auto">
       {/* --- Header: ชื่อบ้าน --- */}
-      <div className="p-4 border-b border-white/5">
+      <div className="p-4 border-b border-gray-200">
         <h2 className="text-text-primary font-bold text-lg">{property.name}</h2>
         {stats.lastScrapedAt && (
           <p className="text-text-secondary text-xs mt-1">

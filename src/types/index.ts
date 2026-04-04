@@ -20,3 +20,12 @@ export type {
   CalendarDay,
   AvailabilitySummary,
 } from "./availability";
+
+// --- User Profile ---
+export type UserProfile = {
+  id: string;
+  email: string | null;
+  role: "admin" | "partner";
+  display_name: string | null;
+  created_at: string;
+};

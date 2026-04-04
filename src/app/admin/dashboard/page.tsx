@@ -51,7 +51,7 @@ export default function AdminDashboardPage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {/* Total Properties */}
-        <div className="bg-surface rounded-xl border border-white/5 p-6">
+        <div className="bg-surface rounded-xl border border-gray-200 p-6">
           <p className="text-text-secondary text-sm">บ้านพักทั้งหมด</p>
           <p className="text-3xl font-bold text-text-primary mt-2">
             {isLoading ? "..." : totalProperties}
@@ -62,7 +62,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Available Today */}
-        <div className="bg-surface rounded-xl border border-white/5 p-6">
+        <div className="bg-surface rounded-xl border border-gray-200 p-6">
           <p className="text-text-secondary text-sm">วันนี้ว่าง</p>
           <p className="text-3xl font-bold text-available mt-2">
             {isLoading ? "..." : availableTodayProperties}
@@ -71,7 +71,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Zones */}
-        <div className="bg-surface rounded-xl border border-white/5 p-6">
+        <div className="bg-surface rounded-xl border border-gray-200 p-6">
           <p className="text-text-secondary text-sm">โซน</p>
           <div className="mt-2 space-y-1">
             <p className="text-text-primary text-sm">
@@ -94,7 +94,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Scraper Control */}
-        <div className="bg-surface rounded-xl border border-white/5 p-6">
+        <div className="bg-surface rounded-xl border border-gray-200 p-6">
           <p className="text-text-secondary text-sm">Scraper</p>
           <button
             onClick={handleTriggerScrape}
@@ -112,7 +112,7 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <a
           href="/admin/properties"
-          className="bg-surface rounded-xl border border-white/5 p-6 hover:border-accent/30 transition-colors"
+          className="bg-surface rounded-xl border border-gray-200 p-6 hover:border-accent/30 transition-colors"
         >
           <h3 className="text-text-primary font-semibold">🏠 จัดการบ้านพัก</h3>
           <p className="text-text-secondary text-sm mt-1">
@@ -122,7 +122,7 @@ export default function AdminDashboardPage() {
 
         <a
           href="/admin/calendar"
-          className="bg-surface rounded-xl border border-white/5 p-6 hover:border-accent/30 transition-colors"
+          className="bg-surface rounded-xl border border-gray-200 p-6 hover:border-accent/30 transition-colors"
         >
           <h3 className="text-text-primary font-semibold">📅 จัดการปฏิทิน</h3>
           <p className="text-text-secondary text-sm mt-1">
@@ -132,7 +132,7 @@ export default function AdminDashboardPage() {
 
         <a
           href="/"
-          className="bg-surface rounded-xl border border-white/5 p-6 hover:border-accent/30 transition-colors"
+          className="bg-surface rounded-xl border border-gray-200 p-6 hover:border-accent/30 transition-colors"
         >
           <h3 className="text-text-primary font-semibold">👁 ดูหน้า Public</h3>
           <p className="text-text-secondary text-sm mt-1">

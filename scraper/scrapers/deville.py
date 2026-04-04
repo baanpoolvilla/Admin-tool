@@ -29,14 +29,22 @@ from .base import BaseScraper, ScrapedDate
 from config import SCRAPE_DAYS_AHEAD
 
 
-DEVILLE_API_BASE = "https://www.devillegroups.com/acldl"
-DEVILLE_BOOKINGS_URL = f"{DEVILLE_API_BASE}/getBookings.php"
-DEVILLE_NSP_URL = f"{DEVILLE_API_BASE}/nsp.php"
-
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-    "Referer": f"{DEVILLE_API_BASE}/",
 }
+
+
+def _get_api_base(source_url: str) -> str:
+    """ดึง API base URL จาก source_url (รองรับ /acld/ และ /acldl/)"""
+    try:
+        from urllib.parse import urlparse
+        parsed = urlparse(source_url)
+        path = parsed.path.rstrip("/")  # e.g. "/acld" or "/acldl"
+        if path and path.startswith("/"):
+            return f"https://www.devillegroups.com{path}"
+    except Exception:
+        pass
+    return "https://www.devillegroups.com/acldl"
 
 
 class DevilleScraper(BaseScraper):
@@ -49,6 +57,12 @@ class DevilleScraper(BaseScraper):
     async def scrape(self, source_url: str, property_code: str) -> list[ScrapedDate]:
         # property_code อาจเป็น "DV-2307" → ต้องใช้แค่ "2307" สำหรับ API
         api_code = property_code.replace("DV-", "") if property_code.startswith("DV-") else property_code
+
+        # ใช้ path จาก source_url (/acld/ หรือ /acldl/)
+        api_base = _get_api_base(source_url)
+        bookings_url = f"{api_base}/getBookings.php"
+        nsp_url = f"{api_base}/nsp.php"
+        headers = {**HEADERS, "Referer": f"{api_base}/"}
 
         today = datetime.now().date()
         end_date = today + timedelta(days=SCRAPE_DAYS_AHEAD)
@@ -63,12 +77,12 @@ class DevilleScraper(BaseScraper):
             current += timedelta(days=1)
 
         # ดึง booking data จาก API ทุกเดือน
-        async with httpx.AsyncClient(timeout=20, headers=HEADERS) as client:
+        async with httpx.AsyncClient(timeout=20, headers=headers) as client:
             for ym in months_to_scrape:
                 print(f"  [deville] ดึง bookings: {ym}")
                 try:
                     resp = await client.get(
-                        DEVILLE_BOOKINGS_URL,
+                        bookings_url,
                         params={"hid": api_code, "day": ym},
                     )
                     if resp.status_code != 200:
@@ -100,7 +114,7 @@ class DevilleScraper(BaseScraper):
             available_dates = [sd for sd in all_dates.values() if sd.status == "available"]
             if available_dates:
                 print(f"  [deville] ดึงราคา {len(available_dates)} วัน...")
-                await self._fetch_prices(client, available_dates, api_code)
+                await self._fetch_prices(client, available_dates, api_code, nsp_url)
 
         results = list(all_dates.values())
         print(f"  [deville] scrape เสร็จ: {len(results)} วัน")
@@ -137,13 +151,13 @@ class DevilleScraper(BaseScraper):
             print(f"  [deville] ข้าม range {chkin}-{chkout}: {e}")
 
     async def _fetch_prices(
-        self, client: httpx.AsyncClient, dates: list[ScrapedDate], hid: str
+        self, client: httpx.AsyncClient, dates: list[ScrapedDate], hid: str, nsp_url: str
     ):
         """ดึงราคาจาก nsp.php สำหรับวันที่ว่าง"""
         for sd in dates:
             try:
                 resp = await client.get(
-                    DEVILLE_NSP_URL,
+                    nsp_url,
                     params={"bk_day": sd.date, "bk_hid": hid},
                 )
                 if resp.status_code == 200:

@@ -14,7 +14,7 @@ import PropertyList from "@/components/public/PropertyList";
 import CalendarView from "@/components/public/CalendarView";
 import { useProperties } from "@/hooks/useProperties";
 import { useAvailability } from "@/hooks/useAvailability";
-import type { PropertyWithStats } from "@/types";
+import type { PropertyWithStats, PropertyZone } from "@/types";
 
 // Dynamic import MapView — Leaflet ไม่รองรับ SSR
 const MapView = dynamic(() => import("@/components/public/MapView"), {
@@ -31,15 +31,31 @@ export default function PublicDashboard() {
   const [selectedProperty, setSelectedProperty] =
     useState<PropertyWithStats | null>(null);
 
+  // --- State: date range filter ---
+  const [dateRange, setDateRange] = useState<{ from: string; to: string } | null>(null);
+
+  // --- State: active zone filter (for map scoping) ---
+  const [activeZone, setActiveZone] = useState<"all" | PropertyZone>("all");
+
+  // --- State: track if selection came from map pin click ---
+  const [scrollToSelected, setScrollToSelected] = useState(false);
+
   // --- Data Fetching ---
-  const { properties, isLoading: propertiesLoading } = useProperties();
+  const { properties, isLoading: propertiesLoading } = useProperties(undefined, dateRange);
   const { availability, isLoading: availabilityLoading } = useAvailability(
     selectedProperty?.id || null
   );
 
-  // --- Handler: เลือก property ---
+  // --- Handler: เลือก property จากการคลิกการ์ด ---
   const handleSelectProperty = useCallback((property: PropertyWithStats) => {
     setSelectedProperty(property);
+    setScrollToSelected(false); // ไม่ต้อง scroll เพราะคลิกจากการ์ดแล้ว
+  }, []);
+
+  // --- Handler: เลือก property จากการคลิก pin บนแผนที่ ---
+  const handleSelectFromMap = useCallback((property: PropertyWithStats) => {
+    setSelectedProperty(property);
+    setScrollToSelected(true); // เลื่อนไปการ์ด
   }, []);
 
   // --- State สำหรับ mobile tab ---
@@ -48,12 +64,20 @@ export default function PublicDashboard() {
   return (
     <div className="h-screen flex flex-col">
       {/* --- Top Bar --- */}
-      <header className="bg-surface border-b border-white/5 px-4 md:px-6 py-3 flex items-center justify-between shrink-0">
-        <h1 className="text-text-primary font-bold text-lg md:text-xl">
-          🏠 Villa Dashboard
-        </h1>
+      <header className="bg-surface border-b border-gray-200 px-4 md:px-6 py-3 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2">
+          <img 
+            src="/logo.png" 
+            alt="Logo" 
+            className="w-8 h-8 object-contain"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <h1 className="text-text-primary font-bold text-lg md:text-xl">
+            Baanpoolvilla Dashboard
+          </h1>
+        </div>
         <a
-          href="/admin/login"
+          href="/login"
           className="text-text-secondary text-sm hover:text-accent transition-colors"
         >
           Admin →
@@ -61,7 +85,7 @@ export default function PublicDashboard() {
       </header>
 
       {/* --- Mobile Tab Bar (แสดงเฉพาะบนมือถือ) --- */}
-      <div className="md:hidden bg-surface border-b border-white/5 flex">
+      <div className="md:hidden bg-surface border-b border-gray-200 flex">
         <button
           onClick={() => setMobileTab("list")}
           className={`flex-1 py-3 text-sm font-medium transition-colors ${
@@ -93,7 +117,7 @@ export default function PublicDashboard() {
         {/* Panel ซ้าย: รายการบ้าน */}
         <aside className={`${
           mobileTab === "list" ? "flex" : "hidden"
-        } md:flex w-full md:w-80 bg-surface md:border-r border-white/5 overflow-hidden shrink-0 flex-col`}>
+        } md:flex w-full md:w-[36rem] bg-surface md:border-r border-gray-200 overflow-hidden shrink-0 flex-col`}>
           <PropertyList
             properties={properties}
             selectedId={selectedProperty?.id || null}
@@ -105,6 +129,10 @@ export default function PublicDashboard() {
               }
             }}
             isLoading={propertiesLoading}
+            dateRange={dateRange}
+            onDateRangeChange={setDateRange}
+            onZoneChange={setActiveZone}
+            scrollToSelected={scrollToSelected}
           />
         </aside>
 
@@ -115,11 +143,13 @@ export default function PublicDashboard() {
           <MapView
             properties={properties}
             selectedId={selectedProperty?.id || null}
+            activeZone={activeZone}
+            visible={mobileTab === "map"}
             onSelect={(property) => {
-              handleSelectProperty(property);
-              // บนมือถือ: เลือกบ้านแล้วไปหน้าปฏิทิน
+              handleSelectFromMap(property);
+              // บนมือถือ: เลือกบ้านแล้วไปหน้ารายการเพื่อเลื่อนไปการ์ด
               if (window.innerWidth < 768) {
-                setMobileTab("calendar");
+                setMobileTab("list");
               }
             }}
           />
@@ -128,7 +158,7 @@ export default function PublicDashboard() {
         {/* Panel ขวา: ปฏิทิน + ราคา */}
         <aside className={`${
           mobileTab === "calendar" ? "flex" : "hidden"
-        } md:flex w-full md:w-96 bg-surface md:border-l border-white/5 overflow-hidden shrink-0 flex-col`}>
+        } md:flex w-full md:w-96 bg-surface md:border-l border-gray-200 overflow-hidden shrink-0 flex-col`}>
           <CalendarView
             property={selectedProperty}
             availability={availability}

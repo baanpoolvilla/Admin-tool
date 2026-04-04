@@ -5,20 +5,45 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { generateSlug } from "@/lib/utils";
 import type { PropertySource, PropertyZone } from "@/types";
+
+type PartnerOption = {
+  id: string;
+  email: string | null;
+  display_name: string | null;
+  role: string;
+};
 
 export default function NewPropertyPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [partners, setPartners] = useState<PartnerOption[]>([]);
+  const [partnerId, setPartnerId] = useState<string>("");
+  const [partnerError, setPartnerError] = useState<string>("");
+
+  // --- โหลดรายชื่อ partners ---
+  useEffect(() => {
+    fetch("/api/admin/partners")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setPartners(data);
+        } else if (data.error) {
+          setPartnerError(data.error);
+        }
+      })
+      .catch((e) => setPartnerError(String(e)));
+  }, []);
 
   // --- Form State ---
   const [form, setForm] = useState({
     name: "",
     slug: "",
+    property_code: "",
     source: "manual" as PropertySource,
     zone: "" as string,
     source_url: "",
@@ -27,12 +52,17 @@ export default function NewPropertyPage() {
     address: "",
     latitude: "",
     longitude: "",
+    location: "", // single "lat, lng" field
     max_guests: "10",
+    extra_guests: "0",
     bedrooms: "1",
     bathrooms: "1",
     base_price: "",
+    pets_allowed: false,
     thumbnail_url: "",
     is_active: true,
+    price_markup: "",
+    detail_url: "",
   });
 
   // --- Auto-generate slug จากชื่อ ---
@@ -53,21 +83,43 @@ export default function NewPropertyPage() {
     const payload = {
       name: form.name,
       slug: form.slug,
+      property_code: form.property_code || null,
       source: form.source,
       zone: form.zone || null,
       source_url: form.source_url || null,
       source_property_id: form.source_property_id || null,
       description: form.description || null,
       address: form.address || null,
-      latitude: form.latitude ? parseFloat(form.latitude) : null,
-      longitude: form.longitude ? parseFloat(form.longitude) : null,
+      latitude: null as number | null,
+      longitude: null as number | null,
       max_guests: parseInt(form.max_guests),
+      extra_guests: parseInt(form.extra_guests) || 0,
       bedrooms: parseInt(form.bedrooms),
       bathrooms: parseInt(form.bathrooms),
       base_price: form.base_price ? parseFloat(form.base_price) : null,
+      pets_allowed: form.pets_allowed,
       thumbnail_url: form.thumbnail_url || null,
       is_active: form.is_active,
+      partner_id: partnerId || null,
+      price_markup: form.price_markup ? parseFloat(form.price_markup) : null,
+      detail_url: form.detail_url || null,
     };
+
+    // Parse location "lat, lng" field
+    if (form.location.trim()) {
+      const parts = form.location.split(",").map((s) => s.trim());
+      if (parts.length === 2) {
+        const lat = parseFloat(parts[0]);
+        const lng = parseFloat(parts[1]);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          payload.latitude = lat;
+          payload.longitude = lng;
+        }
+      }
+    } else if (form.latitude && form.longitude) {
+      payload.latitude = parseFloat(form.latitude);
+      payload.longitude = parseFloat(form.longitude);
+    }
 
     const res = await fetch("/api/properties", {
       method: "POST",
@@ -93,11 +145,11 @@ export default function NewPropertyPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="bg-surface rounded-xl border border-white/5 p-6 space-y-6"
+        className="bg-surface rounded-xl border border-gray-200 p-6 space-y-6"
       >
         {/* --- ข้อมูลหลัก --- */}
         <fieldset>
-          <legend className="text-text-primary font-semibold text-sm mb-4 border-b border-white/5 pb-2 w-full">
+          <legend className="text-text-primary font-semibold text-sm mb-4 border-b border-gray-200 pb-2 w-full">
             ข้อมูลหลัก
           </legend>
 
@@ -112,7 +164,7 @@ export default function NewPropertyPage() {
                 required
                 value={form.name}
                 onChange={(e) => handleNameChange(e.target.value)}
-                className="w-full px-4 py-2 bg-card border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-accent"
+                className="w-full px-4 py-2 bg-card border border-gray-200 rounded-lg text-text-primary focus:outline-none focus:border-accent"
                 placeholder="Pool Villa Pattaya"
               />
             </div>
@@ -129,7 +181,7 @@ export default function NewPropertyPage() {
                 onChange={(e) =>
                   setForm((prev) => ({ ...prev, slug: e.target.value }))
                 }
-                className="w-full px-4 py-2 bg-card border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-accent"
+                className="w-full px-4 py-2 bg-card border border-gray-200 rounded-lg text-text-primary focus:outline-none focus:border-accent"
               />
             </div>
 
@@ -146,7 +198,7 @@ export default function NewPropertyPage() {
                     zone: e.target.value,
                   }))
                 }
-                className="w-full px-4 py-2 bg-card border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-accent"
+                className="w-full px-4 py-2 bg-card border border-gray-200 rounded-lg text-text-primary focus:outline-none focus:border-accent"
               >
                 <option value="">-- เลือกโซน --</option>
                 <option value="bangsaen">บางแสน</option>
@@ -154,6 +206,25 @@ export default function NewPropertyPage() {
                 <option value="sattahip">สัตหีบ</option>
                 <option value="rayong">ระยอง</option>
               </select>
+            </div>
+
+            {/* Property Code */}
+            <div>
+              <label className="block text-text-secondary text-sm mb-1">
+                รหัสบ้าน
+              </label>
+              <input
+                type="text"
+                value={form.property_code}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    property_code: e.target.value,
+                  }))
+                }
+                className="w-full px-4 py-2 bg-card border border-gray-200 rounded-lg text-text-primary focus:outline-none focus:border-accent"
+                placeholder="BPV-001"
+              />
             </div>
 
             {/* Source Property ID */}
@@ -170,7 +241,7 @@ export default function NewPropertyPage() {
                     source_property_id: e.target.value,
                   }))
                 }
-                className="w-full px-4 py-2 bg-card border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-accent"
+                className="w-full px-4 py-2 bg-card border border-gray-200 rounded-lg text-text-primary focus:outline-none focus:border-accent"
                 placeholder="2304"
               />
             </div>
@@ -186,7 +257,7 @@ export default function NewPropertyPage() {
                 onChange={(e) =>
                   setForm((prev) => ({ ...prev, source_url: e.target.value }))
                 }
-                className="w-full px-4 py-2 bg-card border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-accent"
+                className="w-full px-4 py-2 bg-card border border-gray-200 rounded-lg text-text-primary focus:outline-none focus:border-accent"
                 placeholder="https://www.devillegroups.com/acld/?s=2304"
               />
             </div>
@@ -195,7 +266,7 @@ export default function NewPropertyPage() {
 
         {/* --- รายละเอียด --- */}
         <fieldset>
-          <legend className="text-text-primary font-semibold text-sm mb-4 border-b border-white/5 pb-2 w-full">
+          <legend className="text-text-primary font-semibold text-sm mb-4 border-b border-gray-200 pb-2 w-full">
             รายละเอียด
           </legend>
 
@@ -210,7 +281,7 @@ export default function NewPropertyPage() {
                   setForm((prev) => ({ ...prev, description: e.target.value }))
                 }
                 rows={3}
-                className="w-full px-4 py-2 bg-card border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-accent resize-none"
+                className="w-full px-4 py-2 bg-card border border-gray-200 rounded-lg text-text-primary focus:outline-none focus:border-accent resize-none"
               />
             </div>
 
@@ -224,47 +295,33 @@ export default function NewPropertyPage() {
                 onChange={(e) =>
                   setForm((prev) => ({ ...prev, address: e.target.value }))
                 }
-                className="w-full px-4 py-2 bg-card border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-accent"
+                className="w-full px-4 py-2 bg-card border border-gray-200 rounded-lg text-text-primary focus:outline-none focus:border-accent"
               />
             </div>
 
             <div>
               <label className="block text-text-secondary text-sm mb-1">
-                Latitude
+                ตำแหน่งหมุด (lat, lng)
               </label>
               <input
-                type="number"
-                step="any"
-                value={form.latitude}
+                type="text"
+                value={form.location}
                 onChange={(e) =>
-                  setForm((prev) => ({ ...prev, latitude: e.target.value }))
+                  setForm((prev) => ({ ...prev, location: e.target.value }))
                 }
-                className="w-full px-4 py-2 bg-card border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-accent"
-                placeholder="12.9236"
+                className="w-full px-4 py-2 bg-card border border-gray-200 rounded-lg text-text-primary focus:outline-none focus:border-accent"
+                placeholder="12.879930, 100.976737"
               />
-            </div>
-
-            <div>
-              <label className="block text-text-secondary text-sm mb-1">
-                Longitude
-              </label>
-              <input
-                type="number"
-                step="any"
-                value={form.longitude}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, longitude: e.target.value }))
-                }
-                className="w-full px-4 py-2 bg-card border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-accent"
-                placeholder="100.8825"
-              />
+              <p className="text-xs text-text-secondary mt-1">
+                วาง lat, lng จาก Google Maps ได้เลย
+              </p>
             </div>
           </div>
         </fieldset>
 
         {/* --- ราคา & ห้อง --- */}
         <fieldset>
-          <legend className="text-text-primary font-semibold text-sm mb-4 border-b border-white/5 pb-2 w-full">
+          <legend className="text-text-primary font-semibold text-sm mb-4 border-b border-gray-200 pb-2 w-full">
             ราคา & ห้อง
           </legend>
 
@@ -279,7 +336,7 @@ export default function NewPropertyPage() {
                 onChange={(e) =>
                   setForm((prev) => ({ ...prev, base_price: e.target.value }))
                 }
-                className="w-full px-4 py-2 bg-card border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-accent"
+                className="w-full px-4 py-2 bg-card border border-gray-200 rounded-lg text-text-primary focus:outline-none focus:border-accent"
               />
             </div>
 
@@ -293,7 +350,7 @@ export default function NewPropertyPage() {
                 onChange={(e) =>
                   setForm((prev) => ({ ...prev, max_guests: e.target.value }))
                 }
-                className="w-full px-4 py-2 bg-card border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-accent"
+                className="w-full px-4 py-2 bg-card border border-gray-200 rounded-lg text-text-primary focus:outline-none focus:border-accent"
               />
             </div>
 
@@ -307,7 +364,7 @@ export default function NewPropertyPage() {
                 onChange={(e) =>
                   setForm((prev) => ({ ...prev, bedrooms: e.target.value }))
                 }
-                className="w-full px-4 py-2 bg-card border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-accent"
+                className="w-full px-4 py-2 bg-card border border-gray-200 rounded-lg text-text-primary focus:outline-none focus:border-accent"
               />
             </div>
 
@@ -321,15 +378,44 @@ export default function NewPropertyPage() {
                 onChange={(e) =>
                   setForm((prev) => ({ ...prev, bathrooms: e.target.value }))
                 }
-                className="w-full px-4 py-2 bg-card border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-accent"
+                className="w-full px-4 py-2 bg-card border border-gray-200 rounded-lg text-text-primary focus:outline-none focus:border-accent"
               />
+            </div>
+
+            <div>
+              <label className="block text-text-secondary text-sm mb-1">
+                เสริมกี่คน
+              </label>
+              <input
+                type="number"
+                value={form.extra_guests}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, extra_guests: e.target.value }))
+                }
+                className="w-full px-4 py-2 bg-card border border-gray-200 rounded-lg text-text-primary focus:outline-none focus:border-accent"
+              />
+            </div>
+
+            <div className="col-span-2 lg:col-span-4 flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="pets_allowed"
+                checked={form.pets_allowed}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, pets_allowed: e.target.checked }))
+                }
+                className="w-4 h-4 accent-accent"
+              />
+              <label htmlFor="pets_allowed" className="text-text-primary text-sm">
+                🐾 รับสัตว์เลี้ยง
+              </label>
             </div>
           </div>
         </fieldset>
 
         {/* --- รูปภาพ --- */}
         <fieldset>
-          <legend className="text-text-primary font-semibold text-sm mb-4 border-b border-white/5 pb-2 w-full">
+          <legend className="text-text-primary font-semibold text-sm mb-4 border-b border-gray-200 pb-2 w-full">
             รูปภาพ
           </legend>
 
@@ -343,7 +429,7 @@ export default function NewPropertyPage() {
               onChange={(e) =>
                 setForm((prev) => ({ ...prev, thumbnail_url: e.target.value }))
               }
-              className="w-full px-4 py-2 bg-card border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-accent"
+              className="w-full px-4 py-2 bg-card border border-gray-200 rounded-lg text-text-primary focus:outline-none focus:border-accent"
             />
           </div>
         </fieldset>
@@ -364,8 +450,74 @@ export default function NewPropertyPage() {
           </label>
         </div>
 
+        {/* --- ราคาบวกเพิ่ม & ลิงก์รายละเอียด --- */}
+        <fieldset>
+          <legend className="text-text-primary font-semibold text-sm mb-4 border-b border-gray-200 pb-2 w-full">
+            หน้าแชร์ & ลิงก์
+          </legend>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-text-secondary text-sm mb-1">ราคาบวกเพิ่ม (฿) - บวกทุกวัน</label>
+              <input 
+                type="number" 
+                value={form.price_markup} 
+                onChange={(e) => setForm((prev) => ({ ...prev, price_markup: e.target.value }))} 
+                placeholder="0" 
+                className="w-full px-4 py-2 bg-card border border-gray-200 rounded-lg text-text-primary focus:outline-none focus:border-accent" 
+              />
+              <p className="text-xs text-text-secondary mt-1">
+                ราคาที่แสดงในหน้าแชร์ = ราคาจริง + ราคาบวกเพิ่ม
+              </p>
+            </div>
+            <div>
+              <label className="block text-text-secondary text-sm mb-1">ลิงก์รายละเอียด</label>
+              <input 
+                type="url" 
+                value={form.detail_url} 
+                onChange={(e) => setForm((prev) => ({ ...prev, detail_url: e.target.value }))} 
+                placeholder="https://..." 
+                className="w-full px-4 py-2 bg-card border border-gray-200 rounded-lg text-text-primary focus:outline-none focus:border-accent" 
+              />
+              <p className="text-xs text-text-secondary mt-1">
+                ลิงก์ไปยังหน้ารายละเอียดภายนอก (เช่น Facebook, Line)
+              </p>
+            </div>
+          </div>
+        </fieldset>
+
+        {/* --- Partner Assignment --- */}
+        <fieldset>
+          <legend className="text-text-primary font-semibold text-sm mb-4 border-b border-gray-200 pb-2 w-full">
+            พาร์ทเนอร์
+          </legend>
+          <div>
+            <label className="block text-text-secondary text-sm mb-1">เลือกพาร์ทเนอร์</label>
+            <select
+              value={partnerId}
+              onChange={(e) => setPartnerId(e.target.value)}
+              className="w-full px-4 py-2 bg-card border border-gray-200 rounded-lg text-text-primary focus:outline-none focus:border-accent"
+            >
+              <option value="">-- ไม่มีพาร์ทเนอร์ --</option>
+              {partners.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.display_name || p.email || p.id} ({p.role})
+                </option>
+              ))}
+            </select>
+            {partnerError && (
+              <p className="text-red-600 text-xs mt-1">❌ โหลด partners ไม่ได้: {partnerError}</p>
+            )}
+            {!partnerError && partners.length === 0 && (
+              <p className="text-text-secondary text-xs mt-1">ยังไม่มี partner ในระบบ</p>
+            )}
+            <p className="text-xs text-text-secondary mt-1">
+              เลือก partner ที่จะมีสิทธิ์แก้ไขบ้านพักนี้
+            </p>
+          </div>
+        </fieldset>
+
         {/* Error */}
-        {error && <p className="text-red-400 text-sm">{error}</p>}
+        {error && <p className="text-red-600 text-sm">{error}</p>}
 
         {/* Submit */}
         <div className="flex gap-3">

@@ -18,30 +18,30 @@
     @apply bg-background text-text-primary font-sans;
   }
 
-  /* Scrollbar styling (dark theme) */
+  /* Scrollbar styling (light theme) */
   ::-webkit-scrollbar {
     width: 6px;
   }
   ::-webkit-scrollbar-track {
-    @apply bg-surface;
+    @apply bg-gray-100;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-text-secondary/30 rounded-full;
+    @apply bg-gray-300 rounded-full;
   }
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-text-secondary/50;
+    @apply bg-gray-400;
   }
 }
 
-/* --- Leaflet overrides (dark theme) --- */
+/* --- Leaflet overrides (light theme) --- */
 .leaflet-container {
-  background: #1a1d26 !important;
+  background: #f3f1ec !important;
 }
 .leaflet-popup-content-wrapper {
-  @apply bg-surface text-text-primary rounded-lg shadow-xl border border-white/10;
+  @apply bg-white text-text-primary rounded-lg shadow-xl border border-gray-200;
 }
 .leaflet-popup-tip {
-  @apply bg-surface;
+  @apply bg-white;
 }
 
 /* Custom pin marker (ลบ default icon style) */

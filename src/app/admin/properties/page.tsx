@@ -64,12 +64,15 @@ export default function AdminPropertiesPage() {
       {isLoading ? (
         <LoadingSpinner size="lg" />
       ) : (
-        <div className="bg-surface rounded-xl border border-white/5 overflow-hidden">
+        <div className="bg-surface rounded-xl border border-gray-200 overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/5">
+              <tr className="border-b border-gray-200">
                 <th className="text-left p-4 text-text-secondary text-sm font-medium">
                   ชื่อ
+                </th>
+                <th className="text-left p-4 text-text-secondary text-sm font-medium">
+                  รหัส
                 </th>
                 <th className="text-left p-4 text-text-secondary text-sm font-medium">
                   โซน
@@ -95,7 +98,7 @@ export default function AdminPropertiesPage() {
               {properties.map((property) => (
                 <tr
                   key={property.id}
-                  className="border-b border-white/5 hover:bg-card/50 transition-colors"
+                  className="border-b border-gray-200 hover:bg-card/50 transition-colors"
                 >
                   {/* ชื่อ */}
                   <td className="p-4">
@@ -109,6 +112,11 @@ export default function AdminPropertiesPage() {
                         </p>
                       )}
                     </div>
+                  </td>
+
+                  {/* รหัสบ้าน */}
+                  <td className="p-4 text-text-primary text-sm">
+                    {property.property_code || <span className="text-text-secondary">-</span>}
                   </td>
 
                   {/* โซน */}
@@ -149,8 +157,8 @@ export default function AdminPropertiesPage() {
                       }
                       className={`px-2 py-1 rounded-full text-xs ${
                         property.is_active
-                          ? "bg-green-500/20 text-green-400"
-                          : "bg-red-500/20 text-red-400"
+                          ? "bg-green-50 text-green-600"
+                          : "bg-red-50 text-red-600"
                       }`}
                     >
                       {property.is_active ? "Active" : "Inactive"}
@@ -167,7 +175,7 @@ export default function AdminPropertiesPage() {
                     </Link>
                     <button
                       onClick={() => handleDelete(property.id, property.name)}
-                      className="text-red-400 hover:text-red-300 text-sm"
+                      className="text-red-600 hover:text-red-700 text-sm"
                     >
                       ลบ
                     </button>

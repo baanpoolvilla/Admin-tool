@@ -6,7 +6,7 @@
 // =============================================================
 
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
 
 type PropertyUpdate = Database["public"]["Tables"]["properties"]["Update"];
@@ -18,6 +18,21 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   const supabase = await createServerSupabaseClient();
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let role: "admin" | "partner" | null = null;
+  if (user) {
+    const adminClient = createServiceRoleClient();
+    const { data: profile } = await adminClient
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    role = (profile?.role as "admin" | "partner" | undefined) ?? "partner";
+  }
+
   const { data, error } = await supabase
     .from("properties")
     .select("*")
@@ -26,6 +41,16 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 404 });
+  }
+
+  // Public user เห็นเฉพาะบ้านที่ active
+  if (!user && !data.is_active) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  // Partner เห็นเฉพาะบ้านของตัวเอง
+  if (role === "partner" && data.partner_id !== user?.id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   return NextResponse.json(data);
@@ -40,6 +65,17 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const adminClient = createServiceRoleClient();
+  const { data: profile } = await adminClient
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const body: PropertyUpdate = await request.json();
@@ -68,6 +104,17 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const adminClient = createServiceRoleClient();
+  const { data: profile } = await adminClient
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const { error } = await supabase

@@ -2,7 +2,7 @@
 // components/public/PropertyCard.tsx — การ์ดบ้านพัก (Client Component)
 // แสดงในแผง Property List ด้านซ้าย
 // - thumbnail, ชื่อ, ที่อยู่, ราคา, จำนวนวันว่าง
-// - คลิกเพื่อเลือกดูบ้านนั้น
+// - คลิกเพื่อเลือกดูบ้านนั้น + ปุ่มแชร์
 // =============================================================
 
 "use client";
@@ -16,11 +16,26 @@ type PropertyCardProps = {
   onSelect: (property: PropertyWithStats) => void;
 };
 
+// ตรวจสอบว่าเป็น URL ภายนอก (http/https) หรือไม่
+function isExternalUrl(url: string | null): boolean {
+  if (!url) return false;
+  return url.startsWith("http://") || url.startsWith("https://");
+}
+
 export default function PropertyCard({
   property,
   isSelected,
   onSelect,
 }: PropertyCardProps) {
+  const handleShare = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const code = property.property_code || property.id;
+    const url = `${window.location.origin}/villa/${code}`;
+    navigator.clipboard.writeText(url).then(() => {
+      alert("คัดลอกลิงก์แล้ว!");
+    });
+  };
+
   return (
     <button
       onClick={() => onSelect(property)}
@@ -28,27 +43,28 @@ export default function PropertyCard({
         "w-full text-left rounded-lg border p-3 transition-all duration-200",
         "hover:-translate-y-0.5 hover:shadow-lg",
         isSelected
-          ? "border-accent bg-accent/10 shadow-accent/20 shadow-md"
-          : "border-white/5 bg-card hover:border-white/10"
+          ? "border-accent bg-orange-50 shadow-accent/20 shadow-md"
+          : "border-gray-200 bg-card hover:border-gray-200"
       )}
     >
       {/* --- Thumbnail + Status Overlay --- */}
       <div className="relative aspect-video rounded-md overflow-hidden bg-surface mb-3">
-        {property.thumbnail_url ? (
+        {/* แสดง thumbnail เฉพาะเมื่อไม่ใช่ URL ภายนอก */}
+        {property.thumbnail_url && !isExternalUrl(property.thumbnail_url) ? (
           <img
             src={property.thumbnail_url}
             alt={property.name}
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-text-secondary">
+          <div className="w-full h-full flex items-center justify-center text-text-secondary text-3xl">
             🏠
           </div>
         )}
 
         {/* Badge: ราคา (มุมขวาบน) */}
         {property.base_price && (
-          <span className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+          <span className="absolute top-2 right-2 bg-white/90 shadow-sm text-white text-xs px-2 py-1 rounded">
             {formatPrice(property.base_price)}/คืน
           </span>
         )}
@@ -68,7 +84,12 @@ export default function PropertyCard({
         </span>
       </div>
 
-      {/* --- ข้อมูลบ้าน --- */}
+      {/* --- รหัสบ้าน + ชื่อบ้าน --- */}
+      {property.property_code && (
+        <p className="text-accent text-[11px] font-medium truncate">
+          {property.property_code}
+        </p>
+      )}
       <h3 className="text-text-primary font-semibold text-sm truncate">
         {property.name}
       </h3>
@@ -80,18 +101,46 @@ export default function PropertyCard({
       )}
 
       {/* --- สถิติ --- */}
-      <div className="flex items-center gap-3 mt-2 text-xs text-text-secondary">
+      <div className="flex items-center gap-2 mt-2 text-xs text-text-secondary flex-wrap">
         <span>🛏 {property.bedrooms}</span>
         <span>🚿 {property.bathrooms}</span>
-        <span>👥 {property.max_guests}</span>
+        <span>👥 {property.max_guests}{property.extra_guests ? `+${property.extra_guests}` : ""}</span>
+        {property.pets_allowed && <span>🐾</span>}
       </div>
 
-      {/* --- ราคาเฉลี่ย --- */}
-      {property.avg_price && (
-        <p className="text-accent text-xs mt-2">
-          ราคาเฉลี่ย {formatPrice(property.avg_price)}/คืน
-        </p>
-      )}
+      {/* --- ราคาเริ่มต้น + Actions --- */}
+      <div className="flex items-center justify-between mt-2">
+        {property.min_price ? (
+          <p className="text-accent text-xs">
+            ราคาเริ่มต้น {formatPrice(property.min_price)}/คืน
+          </p>
+        ) : (
+          <span />
+        )}
+        <div className="flex items-center gap-2">
+          {/* ปุ่มรายละเอียด */}
+          {property.detail_url && (
+            <a
+              href={property.detail_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="text-text-secondary hover:text-accent text-sm cursor-pointer transition-colors"
+              title="รายละเอียด"
+            >
+              📋
+            </a>
+          )}
+          {/* ปุ่มแชร์ */}
+          <span
+            onClick={handleShare}
+            className="text-text-secondary hover:text-accent text-sm cursor-pointer transition-colors"
+            title="แชร์"
+          >
+            🔗
+          </span>
+        </div>
+      </div>
     </button>
   );
 }
