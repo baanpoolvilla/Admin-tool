@@ -114,30 +114,6 @@ export default function PropertyList({
           🏠 บ้านพัก ({sorted.length})
         </h2>
 
-        {/* Search box */}
-        <div className="mb-3">
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">
-              🔍
-            </span>
-            <input
-              type="text"
-              placeholder="ค้นหารหัสบ้าน หรือ ชื่อบ้าน..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 bg-card border border-gray-200 rounded-lg text-text-primary text-sm placeholder:text-text-secondary focus:outline-none focus:border-accent/50 transition-colors"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-gray-900 text-xs transition-colors"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-        </div>
-
         {/* Filter buttons */}
         <div className="flex flex-wrap gap-1">
           {zoneFilters.map((zf) => (
@@ -226,35 +202,61 @@ export default function PropertyList({
           </div>
         </div>
 
-        {/* Date range filter */}
-        <div className="mt-3 space-y-2 relative" ref={datePickerRef}>
-          <p className="text-text-secondary text-xs">📅 ค้นหาวันว่าง</p>
-          <button
-            onClick={() => setShowDatePicker(!showDatePicker)}
-            className="w-full px-3 py-2 bg-card border border-gray-200 rounded-lg text-text-primary text-xs text-left hover:border-accent/50 transition-colors"
-          >
-            {dateRange ? (
-              <span className="text-accent">
-                {dateRange.from === dateRange.to
-                  ? dateRange.from
-                  : `${dateRange.from} → ${dateRange.to}`}
-              </span>
-            ) : (
-              <span className="text-text-secondary">คลิกเพื่อเลือกวัน...</span>
-            )}
-          </button>
-          {showDatePicker && (
-            <div className="absolute top-full left-0 z-50 mt-2">
-              <DateRangePicker
-                value={dateRange}
-                onChange={(range) => {
-                  onDateRangeChange(range);
-                  setShowDatePicker(false);
-                }}
-                onClose={() => setShowDatePicker(false)}
-              />
+        {/* Date range + Search filter */}
+        <div className="mt-3 space-y-2" ref={datePickerRef}>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="relative">
+              <p className="text-text-secondary text-xs mb-1">📅 ค้นหาวันว่าง</p>
+              <button
+                onClick={() => setShowDatePicker(!showDatePicker)}
+                className="w-full px-3 py-2 bg-card border border-gray-200 rounded-lg text-text-primary text-xs text-left hover:border-accent/50 transition-colors"
+              >
+                {dateRange ? (
+                  <span className="text-accent">
+                    {dateRange.from === dateRange.to
+                      ? dateRange.from
+                      : `${dateRange.from} → ${dateRange.to}`}
+                  </span>
+                ) : (
+                  <span className="text-text-secondary">คลิกเพื่อเลือกวัน...</span>
+                )}
+              </button>
+              {showDatePicker && (
+                <div className="absolute top-full left-0 z-50 mt-2">
+                  <DateRangePicker
+                    value={dateRange}
+                    onChange={(range) => {
+                      onDateRangeChange(range);
+                      setShowDatePicker(false);
+                    }}
+                    onClose={() => setShowDatePicker(false)}
+                  />
+                </div>
+              )}
             </div>
-          )}
+
+            <div>
+              <p className="text-text-secondary text-xs mb-1">🔍 Search บ้าน</p>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="รหัสบ้าน / ชื่อบ้าน"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-3 pr-8 py-2 bg-card border border-gray-200 rounded-lg text-text-primary text-xs placeholder:text-text-secondary focus:outline-none focus:border-accent/50 transition-colors"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-gray-900 text-xs transition-colors"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
           {dateRange && (
             <div className="flex items-center justify-between">
               <p className="text-xs text-accent">
