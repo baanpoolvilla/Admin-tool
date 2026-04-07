@@ -49,6 +49,7 @@ export default function PropertyList({
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [guestCount, setGuestCount] = useState("");
   const [onlyPetsAllowed, setOnlyPetsAllowed] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const datePickerRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -73,8 +74,15 @@ export default function PropertyList({
     }
   }, [scrollToSelected, selectedId]);
 
-  // กรอง properties ตามโซน + ว่างวันนี้ + จำนวนคน + สัตว์เลี้ยง
+  // กรอง properties ตามการค้นหา + โซน + ว่างวันนี้ + จำนวนคน + สัตว์เลี้ยง
   const filtered = properties.filter((p) => {
+    // ค้นหาด้วยรหัสบ้านหรือชื่อบ้าน
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchCode = p.property_code?.toLowerCase().includes(query);
+      const matchName = p.name?.toLowerCase().includes(query);
+      if (!matchCode && !matchName) return false;
+    }
     if (filter !== "all" && p.zone !== filter) return false;
     if (onlyAvailableToday && !p.is_available_today) return false;
     if (onlyPetsAllowed && !p.pets_allowed) return false;
@@ -105,6 +113,30 @@ export default function PropertyList({
         <h2 className="text-text-primary font-bold text-lg mb-3">
           🏠 บ้านพัก ({sorted.length})
         </h2>
+
+        {/* Search box */}
+        <div className="mb-3">
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">
+              🔍
+            </span>
+            <input
+              type="text"
+              placeholder="ค้นหารหัสบ้าน หรือ ชื่อบ้าน..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-8 py-2 bg-card border border-gray-200 rounded-lg text-text-primary text-sm placeholder:text-text-secondary focus:outline-none focus:border-accent/50 transition-colors"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-gray-900 text-xs transition-colors"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
 
         {/* Filter buttons */}
         <div className="flex flex-wrap gap-1">
