@@ -22,13 +22,14 @@ export default function PartnerClientLayout({
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUserEmail(data.user?.email ?? null);
+    supabase.auth.getSession().then(({ data }) => {
+      setUserEmail(data.session?.user?.email ?? null);
     });
   }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    document.cookie = "user-role=; path=/; max-age=0";
     router.push("/login");
   };
 

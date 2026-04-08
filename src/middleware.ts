@@ -60,17 +60,32 @@ export async function middleware(request: NextRequest) {
 
   // ตรวจสอบ role เพื่อป้องกัน partner เข้า /admin/* และ admin เข้า /partner/*
   if (user && (isAdminRoute || isPartnerRoute || isAnyLoginPage)) {
-    const adminClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_KEY!
-    );
-    const { data: profile } = await adminClient
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+    // อ่าน role จาก cookie ก่อน (fast path — ไม่ต้อง query DB)
+    let role = request.cookies.get("user-role")?.value;
 
-    const role = profile?.role ?? "admin";
+    if (!role || (role !== "admin" && role !== "partner")) {
+      // ไม่มี cookie → query DB (slow path — ครั้งเดียว)
+      const adminClient = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_KEY!
+      );
+      const { data: profile } = await adminClient
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      role = profile?.role ?? "admin";
+
+      // เซ็ต cookie เพื่อไม่ต้อง query DB ครั้งต่อไป
+      supabaseResponse.cookies.set("user-role", role as string, {
+        path: "/",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60, // 1 ชั่วโมง
+      });
+    }
 
     // ถ้า login แล้วเข้า page login ใดๆ → redirect ตาม role
     if (isAnyLoginPage) {

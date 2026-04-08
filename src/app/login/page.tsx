@@ -39,7 +39,7 @@ export default function LoginPage() {
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedPassword = password.trim();
 
-    const { error: authError } = await supabase.auth.signInWithPassword({
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email: normalizedEmail,
       password: normalizedPassword,
     });
@@ -54,23 +54,29 @@ export default function LoginPage() {
       return;
     }
 
-    // ดึง role จาก profile เพื่อ redirect ตาม role
-    try {
-      const profileRes = await fetch("/api/auth/profile");
-      if (profileRes.ok) {
-        const profile = await profileRes.json();
-        if (profile.role === "partner") {
+    // ดึง role จาก profile โดยตรง (ไม่ต้องเรียก API แยก → เร็วขึ้น)
+    const userId = authData.user?.id;
+    if (userId) {
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", userId)
+          .single();
+
+        // ตั้ง cookie เพื่อให้ middleware ไม่ต้อง query DB ซ้ำ
+        document.cookie = `user-role=${profile?.role ?? "admin"}; path=/; max-age=3600; samesite=lax`;
+
+        if (profile?.role === "partner") {
           router.replace("/partner/dashboard");
-          router.refresh();
           return;
         }
+      } catch {
+        // fallback → ไป admin dashboard
       }
-    } catch {
-      // ถ้าดึง profile ไม่ได้ → ไป admin dashboard (default)
     }
 
     router.replace("/admin/dashboard");
-    router.refresh();
   };
 
   return (
