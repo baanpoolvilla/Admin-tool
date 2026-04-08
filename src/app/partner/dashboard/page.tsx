@@ -87,7 +87,7 @@ export default function PartnerDashboardPage() {
         >
           <h3 className="text-text-primary font-semibold">📅 จัดการปฏิทิน</h3>
           <p className="text-text-secondary text-sm mt-1">
-            กำหนดวันว่าง วันจอง และราคา
+            กำหนดวันว่าง และราคา
           </p>
         </a>
 
@@ -97,7 +97,7 @@ export default function PartnerDashboardPage() {
         >
           <h3 className="text-text-primary font-semibold">👁 ดูหน้า Public</h3>
           <p className="text-text-secondary text-sm mt-1">
-            แผนที่ + ปฏิทิน สำหรับผู้ใช้ทั่วไป
+            แผนที่ + ปฏิทิน
           </p>
         </a>
       </div>

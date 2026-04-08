@@ -126,7 +126,7 @@ export default function AdminDashboardPage() {
         >
           <h3 className="text-text-primary font-semibold">📅 จัดการปฏิทิน</h3>
           <p className="text-text-secondary text-sm mt-1">
-            กำหนดวันว่าง/จอง ด้วยตนเอง
+            กำหนดวันว่าง ด้วยตนเอง
           </p>
         </a>
 
@@ -136,7 +136,7 @@ export default function AdminDashboardPage() {
         >
           <h3 className="text-text-primary font-semibold">👁 ดูหน้า Public</h3>
           <p className="text-text-secondary text-sm mt-1">
-            แผนที่ + ปฏิทิน สำหรับผู้ใช้ทั่วไป
+            แผนที่ + ปฏิทิน
           </p>
         </a>
       </div>
