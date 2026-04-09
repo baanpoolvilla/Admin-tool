@@ -27,12 +27,21 @@ export default function PropertyCard({
   isSelected,
   onSelect,
 }: PropertyCardProps) {
-  const handleShare = (e: React.MouseEvent) => {
+  const handleShareAgent = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const code = property.property_code || property.id;
+    const url = `${window.location.origin}/villa/${code}?view=agent`;
+    navigator.clipboard.writeText(url).then(() => {
+      alert("คัดลอกลิงก์สำหรับ Agent แล้ว!");
+    });
+  };
+
+  const handleShareCustomer = (e: React.MouseEvent) => {
     e.stopPropagation();
     const code = property.property_code || property.id;
     const url = `${window.location.origin}/villa/${code}`;
     navigator.clipboard.writeText(url).then(() => {
-      alert("คัดลอกลิงก์แล้ว!");
+      alert("คัดลอกลิงก์สำหรับลูกค้าแล้ว!");
     });
   };
 
@@ -131,11 +140,19 @@ export default function PropertyCard({
               📋
             </a>
           )}
-          {/* ปุ่มแชร์ */}
+          {/* ปุ่มแชร์สำหรับ Agent */}
           <span
-            onClick={handleShare}
+            onClick={handleShareAgent}
             className="text-text-secondary hover:text-accent text-sm cursor-pointer transition-colors"
-            title="แชร์"
+            title="แชร์สำหรับ Agent"
+          >
+            🤝
+          </span>
+          {/* ปุ่มแชร์สำหรับลูกค้า */}
+          <span
+            onClick={handleShareCustomer}
+            className="text-text-secondary hover:text-accent text-sm cursor-pointer transition-colors"
+            title="แชร์สำหรับลูกค้า"
           >
             🔗
           </span>

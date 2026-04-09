@@ -34,11 +34,7 @@ export default function CalendarView({
 
   // --- คำนวณสถิติ ---
   const stats = useMemo(() => {
-    const markup = typeof property?.price_markup === "number" ? property.price_markup : 0;
     const available = availability.filter((a) => a.status === "available");
-    const prices = available
-      .map((a) => a.price)
-      .filter((p): p is number => p !== null);
     const lastScraped = availability
       .filter((a) => a.scraped_at)
       .sort((a, b) => (b.scraped_at! > a.scraped_at! ? 1 : -1))[0];
@@ -46,13 +42,9 @@ export default function CalendarView({
     return {
       availableDays: available.length,
       bookedDays: availability.filter((a) => a.status === "booked").length,
-      avgPrice:
-        prices.length > 0
-          ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length) + markup
-          : null,
       lastScrapedAt: lastScraped?.scraped_at || null,
     };
-  }, [availability, property]);
+  }, [availability]);
 
   // --- สร้างข้อมูลปฏิทิน 2 เดือน ---
   const months = useMemo(() => {
@@ -127,16 +119,11 @@ export default function CalendarView({
       </div>
 
       {/* --- สถิติสรุป --- */}
-      <div className="grid grid-cols-2 gap-3 p-4">
+      <div className="p-4">
         <PriceCard
           label="วันว่าง"
           price={null}
           subtitle={`${stats.availableDays} วัน (จาก ${availability.length} วัน)`}
-        />
-        <PriceCard
-          label="ราคาเฉลี่ย"
-          price={stats.avgPrice}
-          subtitle="ต่อคืน"
         />
       </div>
 

@@ -6,6 +6,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import "leaflet/dist/leaflet.css";
 import { cn, formatPrice } from "@/lib/utils";
 import { calendarConfig } from "@/config/calendar";
@@ -26,6 +27,8 @@ export default function SharedVillaPage({ params }: Props) {
   const [error, setError] = useState(false);
   const [mobileTab, setMobileTab] = useState<"detail" | "calendar">("detail");
   const [currentMonthIdx, setCurrentMonthIdx] = useState(0);
+  const searchParams = useSearchParams();
+  const isAgentView = searchParams.get("view") === "agent";
 
   useEffect(() => {
     async function fetchData() {
@@ -59,8 +62,8 @@ export default function SharedVillaPage({ params }: Props) {
     return map;
   }, [availability]);
 
-  // ราคาบวกเพิ่มจาก property
-  const priceMarkup = property?.price_markup ?? 0;
+  // ราคาบวกเพิ่มจาก property (agent view = ไม่บวก markup)
+  const priceMarkup = isAgentView ? 0 : (property?.price_markup ?? 0);
 
   const stats = useMemo(() => {
     const available = availability.filter((a) => a.status === "available");
@@ -73,16 +76,12 @@ export default function SharedVillaPage({ params }: Props) {
 
     // บวกราคา markup เข้าไป
     const minPriceBase = prices.length > 0 ? Math.min(...prices) : null;
-    const avgPriceBase = prices.length > 0
-      ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length)
-      : null;
 
     return {
       availableDays: available.length,
       bookedDays: availability.filter((a) => a.status === "booked").length,
       totalDays: availability.length,
       minPrice: minPriceBase !== null ? minPriceBase + priceMarkup : null,
-      avgPrice: avgPriceBase !== null ? avgPriceBase + priceMarkup : null,
       lastScrapedAt: lastScraped?.scraped_at || null,
     };
   }, [availability, priceMarkup]);
@@ -291,15 +290,10 @@ export default function SharedVillaPage({ params }: Props) {
         <aside className="hidden md:flex w-96 bg-surface border-l border-gray-200 overflow-hidden shrink-0 flex-col">
           <div className="flex flex-col h-full overflow-y-auto">
             {/* Stats Cards */}
-            <div className="grid grid-cols-2 gap-3 p-4">
+            <div className="p-4">
               <PriceCard
                 label="ราคาเริ่มต้น"
                 price={stats.minPrice}
-                subtitle="ต่อคืน"
-              />
-              <PriceCard
-                label="ราคาเฉลี่ย"
-                price={stats.avgPrice}
                 subtitle="ต่อคืน"
               />
             </div>

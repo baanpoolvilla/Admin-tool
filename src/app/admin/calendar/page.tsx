@@ -437,6 +437,14 @@ export default function AdminCalendarPage() {
                 >
                   ⛔ ทำเครื่องหมาย ปิด
                 </button>
+
+                <button
+                  onClick={() => handleApplyStatus("holiday")}
+                  disabled={selectedDates.size === 0 || saving}
+                  className="w-full py-2.5 bg-yellow-50 text-yellow-700 border border-yellow-400 rounded-lg text-sm font-medium hover:bg-yellow-100 disabled:opacity-30 transition-colors"
+                >
+                  ⭐ ทำเครื่องหมาย วันหยุดพิเศษ
+                </button>
               </div>
             </div>
 
@@ -455,6 +463,10 @@ export default function AdminCalendarPage() {
                 <div className="flex items-center gap-2">
                   <span className="w-4 h-4 rounded bg-gray-500/20 border border-gray-500" />
                   <span className="text-text-secondary">ปิด (Blocked)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-4 h-4 rounded bg-yellow-50 border border-yellow-400" />
+                  <span className="text-text-secondary">วันหยุดพิเศษ (Holiday)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="w-4 h-4 rounded ring-2 ring-accent" />

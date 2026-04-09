@@ -11,7 +11,7 @@ export type AvailabilityInsert = Database["public"]["Tables"]["availability"]["I
 export type AvailabilityUpdate = Database["public"]["Tables"]["availability"]["Update"];
 
 // --- สถานะวัน ---
-export type AvailabilityStatus = "available" | "booked" | "blocked";
+export type AvailabilityStatus = "available" | "booked" | "blocked" | "holiday";
 
 // --- ข้อมูลสรุปสำหรับ Calendar ---
 export type CalendarDay = {

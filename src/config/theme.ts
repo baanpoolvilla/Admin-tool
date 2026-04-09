@@ -25,6 +25,12 @@ export const theme = {
       text: "text-gray-500",
       hover: "",
     },
+    holiday: {
+      bg: "bg-yellow-50",
+      border: "border-yellow-400",
+      text: "text-yellow-700",
+      hover: "hover:bg-yellow-100",
+    },
     past: {
       bg: "opacity-40",
       border: "",
