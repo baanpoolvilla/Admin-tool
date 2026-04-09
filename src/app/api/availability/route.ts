@@ -8,6 +8,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase/server";
 
+const HOLIDAY_TAG = "__holiday__";
+
+function isHolidayRow(row: { status: string; notes: string | null }) {
+  return row.status === "blocked" && typeof row.notes === "string" && row.notes.includes(HOLIDAY_TAG);
+}
+
+function mergeHolidayTag(notes: string | null | undefined) {
+  const base = (notes || "").trim();
+  if (!base) return HOLIDAY_TAG;
+  if (base.includes(HOLIDAY_TAG)) return base;
+  return `${HOLIDAY_TAG} ${base}`;
+}
+
+function removeHolidayTag(notes: string | null | undefined) {
+  if (!notes) return null;
+  const cleaned = notes.replace(HOLIDAY_TAG, "").trim();
+  return cleaned.length > 0 ? cleaned : null;
+}
+
 // --- GET: ดึง Availability ---
 // Query params: ?property_id=xxx&from=2025-03-01&to=2025-04-30
 export async function GET(request: NextRequest) {
@@ -40,7 +59,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  const mapped = (data || []).map((row) => {
+    if (!isHolidayRow(row)) return row;
+    return {
+      ...row,
+      status: "holiday",
+      notes: removeHolidayTag(row.notes),
+    };
+  });
+
+  return NextResponse.json(mapped);
 }
 
 // --- POST: Upsert Availability (Manual) ---
@@ -81,24 +109,30 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  const requestedStatus = body.status as string;
+  const storageStatus = requestedStatus === "holiday" ? "blocked" : requestedStatus;
+  const storageNotes = requestedStatus === "holiday"
+    ? mergeHolidayTag(body.notes)
+    : removeHolidayTag(body.notes);
+
   // รองรับทั้ง single date และ bulk dates
   const entries = body.dates
     ? body.dates.map((date: string) => ({
         property_id: body.property_id,
         date,
-        status: body.status,
+        status: storageStatus,
         price: body.price ?? null,
         source: "manual" as const,
-        notes: body.notes ?? null,
+        notes: storageNotes,
       }))
     : [
         {
           property_id: body.property_id,
           date: body.date,
-          status: body.status,
+          status: storageStatus,
           price: body.price ?? null,
           source: "manual" as const,
-          notes: body.notes ?? null,
+          notes: storageNotes,
         },
       ];
 

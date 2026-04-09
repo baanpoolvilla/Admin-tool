@@ -5,13 +5,18 @@
 
 import type { Database } from "./database";
 
-// --- Type หลักจาก DB ---
-export type Availability = Database["public"]["Tables"]["availability"]["Row"];
-export type AvailabilityInsert = Database["public"]["Tables"]["availability"]["Insert"];
-export type AvailabilityUpdate = Database["public"]["Tables"]["availability"]["Update"];
-
 // --- สถานะวัน ---
 export type AvailabilityStatus = "available" | "booked" | "blocked" | "holiday";
+
+// --- Type หลักจาก DB (ขยาย status ให้รองรับ holiday ในฝั่ง API/UI) ---
+export type Availability = Omit<
+  Database["public"]["Tables"]["availability"]["Row"],
+  "status"
+> & {
+  status: AvailabilityStatus;
+};
+export type AvailabilityInsert = Database["public"]["Tables"]["availability"]["Insert"];
+export type AvailabilityUpdate = Database["public"]["Tables"]["availability"]["Update"];
 
 // --- ข้อมูลสรุปสำหรับ Calendar ---
 export type CalendarDay = {

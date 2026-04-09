@@ -62,8 +62,9 @@ export default function SharedVillaPage({ params }: Props) {
     return map;
   }, [availability]);
 
-  // ราคาบวกเพิ่มจาก property (agent view = ไม่บวก markup)
-  const priceMarkup = isAgentView ? 0 : (property?.price_markup ?? 0);
+  // ค่าคอมจาก property: ลูกค้าเห็นราคาจริง, Agent เห็นราคาหักค่าคอม
+  const commission = property?.price_markup ?? 0;
+  const priceAdjust = isAgentView ? -commission : 0;
 
   const stats = useMemo(() => {
     const available = availability.filter((a) => a.status === "available");
@@ -81,10 +82,10 @@ export default function SharedVillaPage({ params }: Props) {
       availableDays: available.length,
       bookedDays: availability.filter((a) => a.status === "booked").length,
       totalDays: availability.length,
-      minPrice: minPriceBase !== null ? minPriceBase + priceMarkup : null,
+      minPrice: minPriceBase !== null ? Math.max(0, minPriceBase + priceAdjust) : null,
       lastScrapedAt: lastScraped?.scraped_at || null,
     };
-  }, [availability, priceMarkup]);
+  }, [availability, priceAdjust]);
 
   const months = useMemo(() => {
     const result = [];
@@ -104,8 +105,10 @@ export default function SharedVillaPage({ params }: Props) {
         const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
         const isPast = new Date(dateStr) < new Date(new Date().toDateString());
         const entry = dateMap.get(dateStr);
-        // บวกราคา markup เข้ากับราคาแต่ละวัน
-        const displayPrice = entry?.price ? entry.price + priceMarkup : null;
+        // ลูกค้าเห็นราคาจริง, Agent เห็นราคาหักค่าคอม
+        const displayPrice = entry?.price != null
+          ? Math.max(0, entry.price + priceAdjust)
+          : null;
         days.push({
           day: d, date: dateStr, isPast,
           status: entry?.status || null,
@@ -117,7 +120,7 @@ export default function SharedVillaPage({ params }: Props) {
       result.push({ year, month, monthName: calendarConfig.monthNames[month], days });
     }
     return result;
-  }, [dateMap, priceMarkup]);
+  }, [dateMap, priceAdjust]);
 
   if (loading) {
     return (

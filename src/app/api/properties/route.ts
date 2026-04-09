@@ -127,17 +127,15 @@ export async function GET(request: NextRequest) {
         .filter((p): p is number => p !== null);
       const todayAvailability = availability?.find((a) => a.date === todayStr);
 
-      const markup = typeof property.price_markup === "number" ? property.price_markup : 0;
-
       return {
         ...property,
         available_days: available.length,
         total_days: availability?.length || 0,
         avg_price: prices.length > 0
-          ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length) + markup
+          ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length)
           : null,
         min_price: prices.length > 0
-          ? Math.min(...prices) + markup
+          ? Math.min(...prices)
           : null,
         is_available_today: todayAvailability?.status === "available",
       };

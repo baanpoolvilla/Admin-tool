@@ -14,7 +14,7 @@ type PartnerProperty = {
   property_code: string | null;
   zone: string | null;
   is_active: boolean;
-  base_price: number | null;
+  price_markup: number | null;
   max_guests: number;
   extra_guests: number;
   bedrooms: number;
@@ -54,7 +54,7 @@ export default function PartnerPropertiesPage() {
       name: property.name,
       description: property.description,
       address: property.address,
-      base_price: property.base_price,
+      price_markup: property.price_markup,
       max_guests: property.max_guests,
       extra_guests: property.extra_guests,
       bedrooms: property.bedrooms,
@@ -172,8 +172,8 @@ export default function PartnerPropertiesPage() {
                     <span>🛏 {property.bedrooms}</span>
                     <span>🚿 {property.bathrooms}</span>
                     <span>👥 {property.max_guests}</span>
-                    {property.base_price && (
-                      <span>💰 {formatPrice(property.base_price)}/คืน</span>
+                    {property.price_markup && (
+                      <span>💼 ค่าคอม {formatPrice(property.price_markup)}/คืน</span>
                     )}
                   </div>
                 </div>
@@ -214,24 +214,27 @@ export default function PartnerPropertiesPage() {
                       />
                     </div>
 
-                    {/* Base Price */}
+                    {/* Commission */}
                     <div>
                       <label className="block text-text-secondary text-sm mb-1">
-                        ราคาพื้นฐาน (บาท/คืน)
+                        ค่าคอม Agent (บาท/คืน)
                       </label>
                       <input
                         type="number"
-                        value={editForm.base_price ?? ""}
+                        value={editForm.price_markup ?? ""}
                         onChange={(e) =>
                           setEditForm({
                             ...editForm,
-                            base_price: e.target.value
+                            price_markup: e.target.value
                               ? Number(e.target.value)
                               : null,
                           })
                         }
                         className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-text-primary text-sm focus:outline-none focus:border-accent"
                       />
+                      <p className="text-xs text-text-secondary mt-1">
+                        ตัวอย่าง: ราคาขาย 4,000 และค่าคอม 1,400 → Agent เห็น 2,600
+                      </p>
                     </div>
 
                     {/* Max Guests */}

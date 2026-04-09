@@ -48,7 +48,6 @@ export default function CalendarView({
 
   // --- สร้างข้อมูลปฏิทิน 2 เดือน ---
   const months = useMemo(() => {
-    const markup = typeof property?.price_markup === "number" ? property.price_markup : 0;
     const result = [];
     const now = new Date();
 
@@ -71,7 +70,7 @@ export default function CalendarView({
         const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
         const isPast = new Date(dateStr) < new Date(new Date().toDateString());
         const entry = dateMap.get(dateStr);
-        const displayPrice = entry?.price != null ? entry.price + markup : null;
+        const displayPrice = entry?.price ?? null;
 
         days.push({
           day: d,
@@ -92,7 +91,7 @@ export default function CalendarView({
     }
 
     return result;
-  }, [dateMap, property]);
+  }, [dateMap]);
 
   // --- ไม่มี property ที่เลือก ---
   if (!property) {
