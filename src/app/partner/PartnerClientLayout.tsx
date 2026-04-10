@@ -40,12 +40,21 @@ export default function PartnerClientLayout({
       <aside className="w-full md:w-64 bg-surface border-b md:border-b-0 md:border-r border-gray-200 flex flex-col shrink-0">
         {/* Logo */}
         <div className="px-4 py-3 md:p-6 border-b border-gray-200">
-          <h1 className="text-text-primary font-bold text-base md:text-lg">
-            🏠 Partner Panel
-          </h1>
-          <p className="text-text-secondary text-xs mt-0.5 md:mt-1">
-            จัดการบ้านพักของคุณ
-          </p>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h1 className="text-text-primary font-bold text-base md:text-lg">
+                🏠 Partner Panel
+              </h1>
+              <p className="text-text-secondary text-xs mt-0.5 md:mt-1">
+                จัดการบ้านพักของคุณ
+              </p>
+            </div>
+            {userEmail && (
+              <span className="md:hidden text-[11px] text-text-secondary truncate max-w-[52vw] text-right">
+                👤 {userEmail}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Navigation */}
@@ -88,7 +97,7 @@ export default function PartnerClientLayout({
       {/* --- Main Content --- */}
       <div className="flex-1 flex flex-col overflow-hidden bg-background">
         {/* Top bar */}
-        <div className="h-11 md:h-12 border-b border-gray-200 bg-surface flex items-center justify-end px-3 md:px-6 shrink-0">
+        <div className="hidden md:flex h-12 border-b border-gray-200 bg-surface items-center justify-end px-6 shrink-0">
           {userEmail && (
             <span className="text-xs md:text-sm text-text-secondary truncate max-w-full">
               👤 {userEmail}
