@@ -30,11 +30,12 @@ export default function PartnerClientLayout({
   const handleLogout = async () => {
     await supabase.auth.signOut();
     document.cookie = "user-role=; path=/; max-age=0";
+    document.cookie = "user-role-user-id=; path=/; max-age=0";
     router.push("/login");
   };
 
   return (
-    <div className="h-screen flex flex-col md:flex-row">
+    <div className="min-h-screen md:h-screen flex flex-col md:flex-row">
       {/* --- Sidebar --- */}
       <aside className="w-full md:w-64 bg-surface border-b md:border-b-0 md:border-r border-gray-200 flex flex-col shrink-0">
         {/* Logo */}
@@ -49,13 +50,13 @@ export default function PartnerClientLayout({
 
         {/* Navigation */}
         <nav className="flex-1 p-3 md:p-4">
-          <div className="flex md:flex-col gap-2 overflow-x-auto md:overflow-visible">
+          <div className="grid grid-cols-2 md:grid-cols-1 gap-2">
             {partnerNav.map((item) => (
               <a
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg text-sm transition-colors whitespace-nowrap",
+                  "flex items-center justify-center md:justify-start gap-2 px-3 md:px-4 py-2.5 rounded-lg text-sm transition-colors",
                   pathname === item.href
                     ? "bg-orange-50 text-accent font-medium"
                     : "text-text-secondary hover:bg-card hover:text-text-primary"
@@ -68,7 +69,7 @@ export default function PartnerClientLayout({
         </nav>
 
         {/* Bottom: links + Logout */}
-        <div className="p-3 md:p-4 border-t border-gray-200 flex md:block items-center gap-4 md:space-y-2">
+        <div className="p-3 md:p-4 border-t border-gray-200 flex flex-col md:block gap-2 md:space-y-2">
           <a
             href="/"
             className="text-text-secondary text-sm hover:text-accent transition-colors"

@@ -238,7 +238,7 @@ export default function PartnerCalendarPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <h1 className="text-2xl font-bold text-text-primary mb-6">ปฏิทินบ้านพักของฉัน</h1>
 
       <div className="bg-surface rounded-xl border border-gray-200 p-4 mb-6">

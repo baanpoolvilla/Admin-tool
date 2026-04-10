@@ -138,7 +138,7 @@ export default function NewPropertyPage() {
   };
 
   return (
-    <div className="p-8 max-w-3xl">
+    <div className="p-4 md:p-8 max-w-3xl">
       <h1 className="text-2xl font-bold text-text-primary mb-6">
         เพิ่มบ้านพักใหม่
       </h1>

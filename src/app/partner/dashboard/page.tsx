@@ -38,7 +38,7 @@ export default function PartnerDashboardPage() {
   const activeProperties = properties.filter((p) => p.is_active).length;
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-text-primary">Partner Dashboard</h1>

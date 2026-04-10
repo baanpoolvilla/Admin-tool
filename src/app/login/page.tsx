@@ -54,7 +54,7 @@ export default function LoginPage() {
       return;
     }
 
-    // ดึง role จาก profile โดยตรง (ไม่ต้องเรียก API แยก → เร็วขึ้น)
+    // ดึง role จาก profile โดยตรงเพื่อ redirect ให้ถูกสิทธิ์
     const userId = authData.user?.id;
     if (userId) {
       try {
@@ -64,19 +64,24 @@ export default function LoginPage() {
           .eq("id", userId)
           .single();
 
-        // ตั้ง cookie เพื่อให้ middleware ไม่ต้อง query DB ซ้ำ
-        document.cookie = `user-role=${profile?.role ?? "admin"}; path=/; max-age=3600; samesite=lax`;
+        if (profile?.role === "admin") {
+          router.replace("/admin/dashboard");
+          return;
+        }
 
         if (profile?.role === "partner") {
           router.replace("/partner/dashboard");
           return;
         }
       } catch {
-        // fallback → ไป admin dashboard
+        // fallback ที่ปลอดภัย: ถ้าหา role ไม่เจอให้เป็น partner
+        router.replace("/partner/dashboard");
+        return;
       }
     }
 
-    router.replace("/admin/dashboard");
+    // fallback ที่ปลอดภัย: ไม่มี profile role
+    router.replace("/partner/dashboard");
   };
 
   return (
