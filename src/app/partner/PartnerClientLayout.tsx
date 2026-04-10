@@ -55,6 +55,20 @@ export default function PartnerClientLayout({
               </span>
             )}
           </div>
+          <div className="md:hidden mt-2 flex items-center gap-3 text-xs">
+            <a
+              href="/"
+              className="text-text-secondary hover:text-accent transition-colors"
+            >
+              ← กลับหน้าหลัก
+            </a>
+            <button
+              onClick={handleLogout}
+              className="text-red-500 hover:text-red-600 transition-colors"
+            >
+              ออกจากระบบ
+            </button>
+          </div>
         </div>
 
         {/* Navigation */}
@@ -78,7 +92,7 @@ export default function PartnerClientLayout({
         </nav>
 
         {/* Bottom: links + Logout */}
-        <div className="p-3 md:p-4 border-t border-gray-200 flex flex-col md:block gap-2 md:space-y-2">
+        <div className="hidden md:block p-3 md:p-4 border-t border-gray-200 md:space-y-2">
           <a
             href="/"
             className="text-text-secondary text-sm hover:text-accent transition-colors"
