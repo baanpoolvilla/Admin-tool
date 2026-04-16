@@ -19,6 +19,14 @@ type Props = {
   params: { code: string };
 };
 
+function getAgentCommission(price: number): number {
+  if (price < 5000) return 1000;
+  if (price <= 15000) return 1400;
+  if (price <= 30000) return 1900;
+  if (price <= 49999) return 2900;
+  return 3900;
+}
+
 export default function SharedVillaPage({ params }: Props) {
   const { code } = params;
   const [property, setProperty] = useState<PropertyWithStats | null>(null);
@@ -62,10 +70,6 @@ export default function SharedVillaPage({ params }: Props) {
     return map;
   }, [availability]);
 
-  // ค่าคอมจาก property: ลูกค้าเห็นราคาจริง, Agent เห็นราคาหักค่าคอม
-  const commission = property?.price_markup ?? 0;
-  const priceAdjust = isAgentView ? -commission : 0;
-
   const stats = useMemo(() => {
     const available = availability.filter((a) => a.status === "available");
     const prices = available
@@ -75,17 +79,19 @@ export default function SharedVillaPage({ params }: Props) {
       .filter((a) => a.scraped_at)
       .sort((a, b) => (b.scraped_at! > a.scraped_at! ? 1 : -1))[0];
 
-    // บวกราคา markup เข้าไป
-    const minPriceBase = prices.length > 0 ? Math.min(...prices) : null;
+    const adjustedPrices = isAgentView
+      ? prices.map((price) => Math.max(0, price - getAgentCommission(price)))
+      : prices;
+    const minPriceBase = adjustedPrices.length > 0 ? Math.min(...adjustedPrices) : null;
 
     return {
       availableDays: available.length,
       bookedDays: availability.filter((a) => a.status === "booked").length,
       totalDays: availability.length,
-      minPrice: minPriceBase !== null ? Math.max(0, minPriceBase + priceAdjust) : null,
+      minPrice: minPriceBase,
       lastScrapedAt: lastScraped?.scraped_at || null,
     };
-  }, [availability, priceAdjust]);
+  }, [availability, isAgentView]);
 
   const months = useMemo(() => {
     const result = [];
@@ -105,9 +111,12 @@ export default function SharedVillaPage({ params }: Props) {
         const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
         const isPast = new Date(dateStr) < new Date(new Date().toDateString());
         const entry = dateMap.get(dateStr);
-        // ลูกค้าเห็นราคาจริง, Agent เห็นราคาหักค่าคอม
+        // ลูกค้าเห็นราคาจริง, Agent เห็นราคาหักค่าคอมแบบขั้นบันได
         const displayPrice = entry?.price != null
-          ? Math.max(0, entry.price + priceAdjust)
+          ? Math.max(
+              0,
+              entry.price - (isAgentView ? getAgentCommission(entry.price) : 0)
+            )
           : null;
         days.push({
           day: d, date: dateStr, isPast,
@@ -120,7 +129,7 @@ export default function SharedVillaPage({ params }: Props) {
       result.push({ year, month, monthName: calendarConfig.monthNames[month], days });
     }
     return result;
-  }, [dateMap, priceAdjust]);
+  }, [dateMap, isAgentView]);
 
   if (loading) {
     return (

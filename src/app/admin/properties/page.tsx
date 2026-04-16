@@ -5,6 +5,7 @@
 
 "use client";
 
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useProperties } from "@/hooks/useProperties";
 import { formatPrice } from "@/lib/utils";
@@ -14,6 +15,18 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 export default function AdminPropertiesPage() {
   const { properties, isLoading, mutate } = useProperties();
   const supabase = createClient();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredProperties = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return properties;
+
+    return properties.filter((property) => {
+      const matchName = property.name.toLowerCase().includes(query);
+      const matchCode = property.property_code?.toLowerCase().includes(query);
+      return matchName || Boolean(matchCode);
+    });
+  }, [properties, searchQuery]);
 
   const getZoneLabel = (zone: string | null) => {
     if (zone === "bangsaen") return "บางแสน";
@@ -43,14 +56,23 @@ export default function AdminPropertiesPage() {
   return (
     <div className="p-4 md:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-text-primary">
             จัดการบ้านพัก
           </h1>
           <p className="text-text-secondary text-sm mt-1">
-            {properties.length} รายการ
+            {searchQuery ? `${filteredProperties.length}/${properties.length}` : properties.length} รายการ
           </p>
+        </div>
+        <div className="w-full md:max-w-md">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="ค้นหาชื่อบ้าน หรือ รหัสบ้าน"
+            className="w-full px-3 py-2 bg-card border border-gray-200 rounded-lg text-text-primary text-sm placeholder:text-text-secondary focus:outline-none focus:border-accent"
+          />
         </div>
         <a
           href="/admin/properties/new"
@@ -95,7 +117,7 @@ export default function AdminPropertiesPage() {
               </tr>
             </thead>
             <tbody>
-              {properties.map((property) => (
+              {filteredProperties.map((property) => (
                 <tr
                   key={property.id}
                   className="border-b border-gray-200 hover:bg-card/50 transition-colors"
@@ -185,12 +207,18 @@ export default function AdminPropertiesPage() {
             </tbody>
           </table>
 
-          {properties.length === 0 && (
+          {filteredProperties.length === 0 && (
             <p className="text-text-secondary text-sm text-center py-12">
-              ยังไม่มีบ้านพัก —{" "}
-              <a href="/admin/properties/new" className="text-accent">
-                เพิ่มบ้านใหม่
-              </a>
+              {properties.length === 0 ? (
+                <>
+                  ยังไม่มีบ้านพัก —{" "}
+                  <a href="/admin/properties/new" className="text-accent">
+                    เพิ่มบ้านใหม่
+                  </a>
+                </>
+              ) : (
+                "ไม่พบบ้านพักตามคำค้นหา"
+              )}
             </p>
           )}
         </div>

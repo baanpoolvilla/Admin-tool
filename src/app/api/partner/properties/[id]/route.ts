@@ -41,7 +41,6 @@ export async function PUT(
     "name",
     "description",
     "address",
-    "price_markup",
     "max_guests",
     "extra_guests",
     "bedrooms",

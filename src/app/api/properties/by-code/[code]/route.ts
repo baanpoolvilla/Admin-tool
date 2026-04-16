@@ -11,6 +11,7 @@ type RouteParams = { params: Promise<{ code: string }> };
 
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   const { code } = await params;
+  const normalizedCode = code.trim();
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
   if (!supabaseUrl || supabaseUrl.includes("your-project") || supabaseUrl.includes("xxxx")) {
@@ -19,14 +20,27 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
   const supabase = await createServerSupabaseClient();
 
-  const { data: property, error } = await supabase
+  const { data: propertyByCode } = await supabase
     .from("properties")
     .select("*")
-    .eq("property_code", code)
     .eq("is_active", true)
-    .single();
+    .ilike("property_code", normalizedCode)
+    .maybeSingle();
 
-  if (error || !property) {
+  let property = propertyByCode;
+
+  // fallback: รองรับลิงก์ที่ส่ง id มาตรงๆ
+  if (!property) {
+    const { data: propertyById } = await supabase
+      .from("properties")
+      .select("*")
+      .eq("id", normalizedCode)
+      .eq("is_active", true)
+      .maybeSingle();
+    property = propertyById;
+  }
+
+  if (!property) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
