@@ -17,7 +17,7 @@ on:
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 30  # Scraper อาจใช้เวลา 10-15 นาที
+    timeout-minutes: 60
 
     steps:
       # 1. Checkout code
