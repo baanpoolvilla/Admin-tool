@@ -28,7 +28,16 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const zone = searchParams.get("zone");
+  const zoneThaiMap: Record<string, string> = {
+    บางแสน: "bangsaen",
+    พัทยา: "pattaya",
+    สัตหีบ: "sattahip",
+    ระยอง: "rayong",
+  };
+  const rawZone = searchParams.get("zone");
+  const zone = rawZone
+    ? (zoneThaiMap[rawZone] ?? rawZone)
+    : null;
 
   const supabase = await createServerSupabaseClient();
 
