@@ -16,6 +16,7 @@ interface ImportRecord {
   url: string;
   importedAt: string;
   count: number;
+  dates?: string[];
 }
 
 export default function ICalPage() {
@@ -84,6 +85,7 @@ export default function ICalPage() {
           url: importUrl,
           importedAt: new Date().toISOString(),
           count: data.imported,
+          dates: data.dates ?? [],
         };
         const next = [record, ...history].slice(0, 20);
         setHistory(next);
@@ -314,30 +316,44 @@ export default function ICalPage() {
           </div>
           <div className="divide-y divide-gray-100">
             {history.map((rec, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-4 px-4 py-3 text-sm"
-              >
-                <span className="px-2 py-0.5 bg-orange-50 text-accent rounded text-xs font-mono whitespace-nowrap">
-                  {rec.propertyCode}
-                </span>
-                <span className="text-text-primary font-medium truncate max-w-[160px]">
-                  {rec.propertyName}
-                </span>
-                <span className="text-text-secondary text-xs truncate flex-1 hidden md:block">
-                  {rec.url}
-                </span>
-                <span className="text-green-600 text-xs whitespace-nowrap">
-                  +{rec.count} วัน
-                </span>
-                <span className="text-text-secondary text-xs whitespace-nowrap">
-                  {new Date(rec.importedAt).toLocaleString("th-TH", {
-                    day: "numeric",
-                    month: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
+              <div key={i} className="px-4 py-3 text-sm space-y-1.5">
+                <div className="flex items-center gap-4">
+                  <span className="px-2 py-0.5 bg-orange-50 text-accent rounded text-xs font-mono whitespace-nowrap">
+                    {rec.propertyCode}
+                  </span>
+                  <span className="text-text-primary font-medium truncate max-w-[160px]">
+                    {rec.propertyName}
+                  </span>
+                  <span className="text-text-secondary text-xs truncate flex-1 hidden md:block">
+                    {rec.url}
+                  </span>
+                  <span className="text-green-600 text-xs whitespace-nowrap">
+                    +{rec.count} วัน
+                  </span>
+                  <span className="text-text-secondary text-xs whitespace-nowrap">
+                    {new Date(rec.importedAt).toLocaleString("th-TH", {
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+                {rec.dates && rec.dates.length > 0 && (
+                  <div className="flex flex-wrap gap-1 pl-1">
+                    {rec.dates.map((d) => (
+                      <span
+                        key={d}
+                        className="px-1.5 py-0.5 bg-green-50 text-green-700 border border-green-100 rounded text-xs font-mono"
+                      >
+                        {new Date(d + "T00:00:00").toLocaleDateString("th-TH", {
+                          day: "numeric",
+                          month: "short",
+                        })}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>

@@ -124,6 +124,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     imported: allDates.size,
     events: events.length,
+    dates: Array.from(allDates).sort(),
     message: `นำเข้าสำเร็จ ${allDates.size} วัน จาก ${events.length} รายการจอง`,
   });
 }
