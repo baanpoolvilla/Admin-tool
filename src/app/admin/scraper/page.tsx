@@ -601,13 +601,6 @@ export default function ScraperPage() {
                           disabled={p.alreadyExists}
                           className="accent-accent w-4 h-4"
                         />
-                        {p.imageUrl && (
-                          <img
-                            src={p.imageUrl}
-                            alt={p.name}
-                            className="w-10 h-10 rounded object-cover"
-                          />
-                        )}
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-text-primary font-medium truncate">
                             {p.name}
@@ -659,15 +652,8 @@ export default function ScraperPage() {
                         key={p.code}
                         className="rounded-xl border border-gray-200 bg-card p-4 space-y-5"
                       >
-                        {/* Header: image + code */}
+                        {/* Header: name + code */}
                         <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
-                          {p.imageUrl && (
-                            <img
-                              src={p.imageUrl}
-                              alt={p.name}
-                              className="w-14 h-14 rounded-lg object-cover"
-                            />
-                          )}
                           <div>
                             <span className="text-text-primary font-semibold text-sm">{p.name || p.code}</span>
                             <span className="block text-xs text-text-secondary">{p.code}</span>
@@ -868,17 +854,6 @@ export default function ScraperPage() {
                     key={p.id}
                     className="flex items-center gap-3 px-4 py-3"
                   >
-                    {p.thumbnail_url ? (
-                      <img
-                        src={p.thumbnail_url}
-                        alt={p.name}
-                        className="w-8 h-8 rounded object-cover"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded bg-card flex items-center justify-center text-text-secondary text-xs">
-                        🏠
-                      </div>
-                    )}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-text-primary truncate">
                         {p.name}

@@ -1,7 +1,7 @@
 // =============================================================
 // components/public/PropertyCard.tsx — การ์ดบ้านพัก (Client Component)
 // แสดงในแผง Property List ด้านซ้าย
-// - thumbnail, ชื่อ, ที่อยู่, ราคา, จำนวนวันว่าง
+// - ชื่อ, ที่อยู่, ราคา, จำนวนวันว่าง
 // - คลิกเพื่อเลือกดูบ้านนั้น + ปุ่มแชร์
 // =============================================================
 
@@ -15,12 +15,6 @@ type PropertyCardProps = {
   isSelected: boolean;
   onSelect: (property: PropertyWithStats) => void;
 };
-
-// ตรวจสอบว่าเป็น URL ภายนอก (http/https) หรือไม่
-function isExternalUrl(url: string | null): boolean {
-  if (!url) return false;
-  return url.startsWith("http://") || url.startsWith("https://");
-}
 
 export default function PropertyCard({
   property,
@@ -56,32 +50,12 @@ export default function PropertyCard({
           : "border-gray-200 bg-card hover:border-gray-200"
       )}
     >
-      {/* --- Thumbnail + Status Overlay --- */}
-      <div className="relative aspect-video rounded-md overflow-hidden bg-surface mb-3">
-        {/* แสดง thumbnail เฉพาะเมื่อไม่ใช่ URL ภายนอก */}
-        {property.thumbnail_url && !isExternalUrl(property.thumbnail_url) ? (
-          <img
-            src={property.thumbnail_url}
-            alt={property.name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-text-secondary text-3xl">
-            🏠
-          </div>
-        )}
-
-        {/* Badge: ราคา (มุมขวาบน) */}
-        {property.base_price && (
-          <span className="absolute top-2 right-2 bg-white/90 shadow-sm text-white text-xs px-2 py-1 rounded">
-            {formatPrice(property.base_price)}/คืน
-          </span>
-        )}
-
-        {/* Badge: สถานะ availability (มุมซ้ายล่าง) */}
+      {/* --- Status + ราคา --- */}
+      <div className="flex items-center justify-between gap-2 mb-2">
+        {/* Badge: สถานะ availability */}
         <span
           className={cn(
-            "absolute bottom-2 left-2 text-xs px-2 py-1 rounded font-medium",
+            "text-xs px-2 py-1 rounded font-medium",
             property.available_days > 0
               ? "bg-green-500/80 text-white"
               : "bg-red-500/80 text-white"
@@ -91,6 +65,13 @@ export default function PropertyCard({
             ? `${property.available_days} วันว่าง`
             : "จองเต็ม"}
         </span>
+
+        {/* Badge: ราคา */}
+        {property.base_price && (
+          <span className="text-text-primary text-xs font-medium">
+            {formatPrice(property.base_price)}/คืน
+          </span>
+        )}
       </div>
 
       {/* --- รหัสบ้าน + ชื่อบ้าน --- */}

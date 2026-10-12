@@ -126,21 +126,6 @@ export default function PartnerPropertiesPage() {
             >
               {/* Property Header */}
               <div className="flex items-center gap-4 p-4">
-                {/* Thumbnail */}
-                <div className="w-24 h-16 rounded-lg overflow-hidden bg-gray-100 shrink-0">
-                  {property.thumbnail_url ? (
-                    <img
-                      src={property.thumbnail_url}
-                      alt={property.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-text-secondary">
-                      🏠
-                    </div>
-                  )}
-                </div>
-
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
